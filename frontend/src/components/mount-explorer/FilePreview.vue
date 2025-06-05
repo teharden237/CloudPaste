@@ -1275,27 +1275,17 @@ const formatFileSize = (bytes) => {
   return formatFileSizeUtil(bytes, true); // 使用中文单位
 };
 
+// 导入统一的时间处理工具
+import { formatDateTime } from "../../utils/timeUtils.js";
+
 /**
  * 格式化日期
- * @param {string} dateString - ISO格式的日期字符串
- * @returns {string} 格式化后的日期字符串
+ * @param {string} dateString - UTC 时间字符串
+ * @returns {string} 格式化后的本地时间字符串
  */
 const formatDate = (dateString) => {
   if (!dateString) return "";
-
-  const date = new Date(dateString);
-
-  // 判断是否为有效日期
-  if (isNaN(date.getTime())) return "";
-
-  // 格式化为 YYYY-MM-DD HH:MM
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-
-  return `${year}-${month}-${day} ${hours}:${minutes}`;
+  return formatDateTime(dateString);
 };
 
 // 切换下拉框显示状态
@@ -1323,53 +1313,10 @@ const handleClickOutside = (event) => {
 
 // 监听全局点击事件来关闭下拉框
 onMounted(() => {
-  // 加载文本内容（如果是文本文件）
-  if (isText.value) {
-    loadTextContent();
-  }
-
   // 添加事件监听器
   document.addEventListener("click", handleClickOutside);
   document.addEventListener("keydown", handleKeyDown);
   document.addEventListener("fullscreenchange", handleFullscreenChange);
-
-  // 监听文件变更，自动加载预览
-  watch(
-      () => props.file,
-      () => {
-        // 重置状态
-        textContent.value = "";
-        loadError.value = false;
-        authenticatedPreviewUrl.value = null;
-        highlightedContent.value = "";
-        codeLanguage.value = "";
-        isMarkdownRendered.value = false;
-
-        // 重置Office预览状态
-        microsoftOfficePreviewUrl.value = "";
-        googleDocsPreviewUrl.value = "";
-        officePreviewLoading.value = false;
-        officePreviewError.value = "";
-        officePreviewTimedOut.value = false;
-        clearPreviewLoadTimeout();
-
-        // 如果文件是图片、视频、音频或PDF类型，则获取认证预览URL
-        if (isImage.value || isVideo.value || isAudio.value || isPdf.value) {
-          fetchAuthenticatedUrl();
-        }
-
-        // 如果是Office文件，更新Office预览URL
-        if (isOffice.value) {
-          updateOfficePreviewUrls();
-        }
-
-        // 对于文本文件，需要手动加载内容
-        if (isText.value) {
-          loadTextContent();
-        }
-      },
-      { immediate: true }
-  );
 });
 
 onUnmounted(() => {
