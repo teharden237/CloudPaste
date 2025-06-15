@@ -404,7 +404,10 @@
 
         <!-- 普通文本预览 -->
         <div v-else-if="isText" class="text-preview p-4 overflow-auto max-h-[500px]">
-          <div v-if="isEditMode" class="editor-container h-[500px] border" :class="darkMode ? 'border-gray-700' : 'border-gray-300'">
+          <div v-if="isTextLoading || (!textContent && !loadError)" class="loading-indicator text-center py-8">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 mx-auto" :class="darkMode ? 'border-primary-500' : 'border-primary-600'"></div>
+          </div>
+          <div v-else-if="isEditMode" class="editor-container h-[500px] border" :class="darkMode ? 'border-gray-700' : 'border-gray-300'">
             <textarea
                 v-model="editContent"
                 class="w-full h-full p-4 font-mono text-sm focus:outline-none resize-none"
@@ -529,6 +532,8 @@ const emit = defineEmits(["download", "loaded", "error", "updated"]);
 
 // 文本内容（用于文本文件预览）
 const textContent = ref("");
+// 文本加载状态
+const isTextLoading = ref(false);
 // 加载错误状态
 const loadError = ref(false);
 // 认证预览URL
@@ -879,6 +884,7 @@ const reinitializePreviewOnThemeChange = async () => {
 const loadTextContent = async () => {
   if (isText.value) {
     try {
+      isTextLoading.value = true;
       console.log("加载文本内容，URL:", previewUrl.value);
       // 使用预览URL并添加认证头信息
       const response = await fetch(previewUrl.value, {
@@ -899,6 +905,8 @@ const loadTextContent = async () => {
       console.error("加载文本内容错误:", error);
       textContent.value = "加载文本内容时出错";
       handleContentError();
+    } finally {
+      isTextLoading.value = false;
     }
   }
 };
@@ -1235,7 +1243,6 @@ const highlightAndFormatCode = () => {
   try {
     const fileType = fileTypeInfo.value;
     const language = (fileType && fileType.language) || "";
-    const isConfigFile = fileType && fileType.category === "config";
 
     // 1. 特殊处理 JSON (需要格式化)
     if (language === "json") {
@@ -1277,7 +1284,8 @@ const highlightAndFormatCode = () => {
 // 监听文件变更，重置状态
 watch(
     () => props.file,
-    () => {
+    (newFile) => {
+      // 重置所有状态
       textContent.value = "";
       loadError.value = false;
       authenticatedPreviewUrl.value = null;
@@ -1293,28 +1301,35 @@ watch(
       officePreviewTimedOut.value = false;
       clearPreviewLoadTimeout();
 
-      // 如果文件是图片、视频、音频或PDF类型，则获取认证预览URL
-      if (isImage.value || isVideo.value || isAudio.value || isPdf.value) {
-        fetchAuthenticatedUrl();
-      }
+      // 只有当文件存在时才初始化预览
+      if (newFile) {
+        // 对于文本文件，先设置加载状态，然后加载内容
+        if (isText.value) {
+          isTextLoading.value = true;
+          loadTextContent();
+        } else {
+          isTextLoading.value = false;
+        }
 
-      // 如果是Office文件，更新Office预览URL
-      if (isOffice.value) {
-        updateOfficePreviewUrls();
-      }
+        // 如果文件是图片、视频、音频或PDF类型，则获取认证预览URL
+        if (isImage.value || isVideo.value || isAudio.value || isPdf.value) {
+          fetchAuthenticatedUrl();
+        }
 
-      // 对于文本文件，需要手动加载内容
-      if (isText.value) {
-        loadTextContent();
+        // 如果是Office文件，更新Office预览URL
+        if (isOffice.value) {
+          updateOfficePreviewUrls();
+        }
+      } else {
+        isTextLoading.value = false;
       }
-    },
-    { immediate: true }
+    }
 );
 
 // 监听暗色模式变化
 watch(
     () => props.darkMode,
-    (newValue) => {
+    () => {
       reinitializePreviewOnThemeChange();
     }
 );
@@ -1784,6 +1799,94 @@ button:hover svg {
   :deep(.vditor-reset) {
     font-size: 15px;
     padding: 0.25rem;
+  }
+}
+
+/* 移动端文件预览容器优化 */
+@media (max-width: 768px) {
+  .file-preview-container {
+    margin: 0 -1rem;
+    padding: 0 0.5rem;
+  }
+
+  .file-preview {
+    margin-bottom: 1rem !important;
+    padding: 0.75rem !important;
+    border-radius: 0.5rem !important;
+  }
+
+  /* 文件信息网格在移动端单列显示 */
+  .file-info {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+    padding: 0.75rem !important;
+  }
+
+  /* 按钮组在移动端更紧凑 */
+  .file-preview .flex.flex-wrap {
+    gap: 0.5rem !important;
+  }
+
+  /* 预览内容区域优化 */
+  .preview-content {
+    border-radius: 0.5rem !important;
+  }
+
+  /* 图片预览在移动端更充分利用空间 */
+  .image-preview {
+    padding: 0.5rem !important;
+  }
+
+  .image-preview img {
+    max-height: 60vh !important;
+  }
+
+  /* 视频预览优化 */
+  .video-preview {
+    padding: 0.5rem !important;
+  }
+
+  .video-preview video {
+    max-height: 50vh !important;
+  }
+
+  /* 音频预览优化 */
+  .audio-preview {
+    padding: 0.75rem !important;
+  }
+
+  /* PDF预览高度调整 */
+  .pdf-preview {
+    height: 60vh !important;
+  }
+
+  /* Office预览高度调整 */
+  .office-preview {
+    height: 65vh !important;
+  }
+
+  /* HTML预览优化 */
+  .html-preview iframe {
+    min-height: 50vh !important;
+  }
+
+  /* 代码预览和文本预览高度调整 */
+  .code-preview,
+  .text-preview,
+  .markdown-preview {
+    max-height: 60vh !important;
+    padding: 0.75rem !important;
+  }
+
+  /* 编辑器容器高度调整 */
+  .editor-container {
+    height: 50vh !important;
+  }
+
+  /* 模式选择器优化 */
+  .mode-selector {
+    padding: 0.75rem !important;
+    margin-bottom: 0.75rem !important;
   }
 }
 
