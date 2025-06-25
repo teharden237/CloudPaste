@@ -26,7 +26,7 @@
         class="font-medium cursor-pointer select-none flex items-center hover:opacity-75 transition-opacity"
         :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
         @click="handleSort('name')"
-        title="点击排序"
+        :title="t('mount.fileList.clickToSort')"
       >
         <span class="truncate">{{ t("mount.fileList.name") }}</span>
         <!-- 排序图标 -->
@@ -48,7 +48,7 @@
         class="min-w-24 text-center font-medium hidden sm:flex cursor-pointer select-none items-center justify-center hover:opacity-75 transition-opacity"
         :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
         @click="handleSort('size')"
-        title="点击排序"
+        :title="t('mount.fileList.clickToSort')"
       >
         <span>{{ t("mount.fileList.size") }}</span>
         <!-- 排序图标 -->
@@ -70,7 +70,7 @@
         class="min-w-36 text-center font-medium hidden sm:flex cursor-pointer select-none items-center justify-center hover:opacity-75 transition-opacity"
         :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
         @click="handleSort('modified')"
-        title="点击排序"
+        :title="t('mount.fileList.clickToSort')"
       >
         <span>{{ t("mount.fileList.modifiedTime") }}</span>
         <!-- 排序图标 -->
@@ -372,7 +372,7 @@ const initializeSortState = () => {
       sortOrder.value = savedSortOrder;
     }
   } catch (error) {
-    console.warn("恢复排序状态失败:", error);
+    console.warn("Failed to restore sort state:", error);
   }
 };
 
@@ -382,7 +382,7 @@ const saveSortState = () => {
     localStorage.setItem("file_explorer_sort_field", sortField.value);
     localStorage.setItem("file_explorer_sort_order", sortOrder.value);
   } catch (error) {
-    console.warn("保存排序状态失败:", error);
+    console.warn("Failed to save sort state:", error);
   }
 };
 
@@ -581,7 +581,8 @@ const handleGetLink = async (item) => {
 
   try {
     const getFileLink = isAdmin.value ? api.admin.getFileLink : api.user.fs.getFileLink;
-    const response = await getFileLink(item.path, 86400, true);
+    // 使用S3配置的默认签名时间，强制下载
+    const response = await getFileLink(item.path, null, true);
 
     if (response.success && response.data?.presignedUrl) {
       // 复制链接到剪贴板
@@ -596,15 +597,15 @@ const handleGetLink = async (item) => {
           showLinkCopiedNotification.value = false;
         }, 3000);
       } else {
-        throw new Error("复制失败");
+        throw new Error(t("mount.messages.copyFailed", { message: t("common.unknown") }));
       }
     } else {
       console.error("获取文件直链失败:", response);
-      alert("获取文件直链失败: " + (response.message || "未知错误"));
+      alert(t("mount.messages.getFileLinkFailed", { message: response.message || t("common.unknown") }));
     }
   } catch (error) {
     console.error("获取文件直链错误:", error);
-    alert("获取文件直链错误: " + (error.message || "未知错误"));
+    alert(t("mount.messages.getFileLinkError", { message: error.message || t("common.unknown") }));
   }
 };
 

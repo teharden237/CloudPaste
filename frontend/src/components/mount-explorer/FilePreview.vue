@@ -213,14 +213,18 @@
         </div>
 
         <!-- 音频预览 -->
-        <div v-else-if="isAudio" class="audio-preview p-4">
-          <audio v-if="authenticatedPreviewUrl" controls class="w-full" @loadeddata="handleContentLoaded" @error="handleContentError">
-            <source :src="authenticatedPreviewUrl" :type="file.contentType" />
-            {{ t("mount.filePreview.browserNotSupport") }} {{ t("mount.filePreview.audioTag") }}
-          </audio>
-          <div v-else class="loading-indicator text-center py-8">
-            <div class="animate-spin rounded-full h-10 w-10 border-b-2 mx-auto" :class="darkMode ? 'border-primary-500' : 'border-primary-600'"></div>
-          </div>
+        <div v-else-if="isAudio">
+          <AudioPreview
+            :file="file"
+            :audio-url="authenticatedPreviewUrl"
+            :dark-mode="darkMode"
+            :is-admin="isAdmin"
+            :current-path="getCurrentDirectoryPath()"
+            @play="handleAudioPlay"
+            @pause="handleAudioPause"
+            @error="handleAudioError"
+            @loaded="handleContentLoaded"
+          />
         </div>
 
         <!-- PDF预览 -->
@@ -468,6 +472,7 @@
 import { ref, computed, onMounted, watch, onUnmounted, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import { api } from "../../api";
+import AudioPreview from "./AudioPreview.vue";
 
 const { t } = useI18n();
 import { getAuthHeaders, createAuthenticatedPreviewUrl } from "../../utils/fileUtils";
@@ -528,7 +533,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["download", "loaded", "error", "updated"]);
+const emit = defineEmits(["download", "loaded", "error", "updated", "switch-audio"]);
 
 // 文本内容（用于文本文件预览）
 const textContent = ref("");
@@ -898,12 +903,12 @@ const loadTextContent = async () => {
         await initializePreview();
         handleContentLoaded();
       } else {
-        textContent.value = "无法加载文本内容";
+        textContent.value = t("mount.filePreview.cannotLoadText");
         handleContentError();
       }
     } catch (error) {
       console.error("加载文本内容错误:", error);
-      textContent.value = "加载文本内容时出错";
+      textContent.value = t("mount.filePreview.loadTextError");
       handleContentError();
     } finally {
       isTextLoading.value = false;
@@ -965,7 +970,7 @@ const updateOfficePreviewUrls = async () => {
     }
   } catch (error) {
     console.error("获取Office预览URL失败:", error);
-    officePreviewError.value = error.message || "预览加载失败，无法获取直接访问链接";
+    officePreviewError.value = error.message || t("mount.filePreview.previewError");
     officePreviewLoading.value = false;
 
     // 清除超时计时器
@@ -991,11 +996,12 @@ const getOfficeDirectUrlForPreview = async () => {
   try {
     // 使用文件直链API获取预签名URL
     const fileLinkApi = props.isAdmin ? api.fs.getAdminFileLink : api.fs.getUserFileLink;
-    const response = await fileLinkApi(props.file.path, 3600, false); // 设置1小时过期时间，不强制下载
+    // 使用S3配置的默认签名时间
+    const response = await fileLinkApi(props.file.path, null, false);
 
     // 检查API响应的完整结构
     if (response && response.success && response.data && response.data.presignedUrl) {
-      console.log("获取Office文件预签名URL成功:", response.data.presignedUrl);
+      console.log("Office file presigned URL obtained successfully:", response.data.presignedUrl);
       return response.data.presignedUrl;
     }
 
@@ -1209,7 +1215,7 @@ const initHtmlPreview = async () => {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>HTML预览</title>
+        <title>${t("mount.filePreview.htmlPreview")}</title>
         <style>
           body {
             padding: 15px;
@@ -1361,18 +1367,19 @@ const handleS3DirectPreview = async () => {
 
     // 获取文件的S3直链
     const fileLinkApi = props.isAdmin ? api.fs.getAdminFileLink : api.fs.getUserFileLink;
-    const response = await fileLinkApi(props.file.path, 3600, false); // 1小时过期，不强制下载
+    // 不传递过期时间参数，让后端使用S3配置的默认签名时间
+    const response = await fileLinkApi(props.file.path, null, false);
 
     if (response && response.success && response.data && response.data.presignedUrl) {
       // 在新窗口中打开S3直链
       window.open(response.data.presignedUrl, "_blank");
     } else {
       console.error("获取S3直链失败:", response);
-      alert("获取S3直链失败: " + (response.message || "未知错误"));
+      alert(t("mount.filePreview.getS3LinkFailed", { message: response.message || t("common.unknown") }));
     }
   } catch (error) {
     console.error("S3直链预览错误:", error);
-    alert("S3直链预览失败: " + (error.message || "未知错误"));
+    alert(t("mount.filePreview.s3PreviewFailed", { message: error.message || t("common.unknown") }));
   } finally {
     isGeneratingPreview.value = false;
   }
@@ -1473,6 +1480,43 @@ const cancelEdit = () => {
   });
 };
 
+// 音频播放器事件处理函数
+const handleAudioPlay = (data) => {
+  console.log("音频开始播放:", data);
+  // 可以在这里添加播放统计或其他逻辑
+};
+
+const handleAudioPause = (data) => {
+  console.log("音频暂停播放:", data);
+  // 可以在这里添加暂停统计或其他逻辑
+};
+
+const handleAudioError = (error) => {
+  // 忽略Service Worker相关的误报错误
+  if (error?.target?.src?.includes(window.location.origin) && previewUrl.value?.startsWith("https://")) {
+    console.log("🎵 忽略Service Worker相关的误报错误，音频实际可以正常播放");
+    return;
+  }
+
+  console.error("音频播放错误:", error);
+  handleContentError();
+};
+
+// 获取当前目录路径
+const getCurrentDirectoryPath = () => {
+  if (!props.file?.path) return "";
+
+  // 从文件路径中提取目录路径
+  const filePath = props.file.path;
+  const lastSlashIndex = filePath.lastIndexOf("/");
+
+  if (lastSlashIndex === -1) {
+    return "/"; // 根目录
+  }
+
+  return filePath.substring(0, lastSlashIndex + 1);
+};
+
 // 保存编辑的内容
 const saveContent = async () => {
   if (isSaving.value) return;
@@ -1480,7 +1524,7 @@ const saveContent = async () => {
   // 检查内容大小限制 (10MB)
   const MAX_CONTENT_SIZE = 10 * 1024 * 1024;
   if (editContent.value.length > MAX_CONTENT_SIZE) {
-    alert(`文件内容过大，超过最大限制(10MB)。请减少文件大小后重试。`);
+    alert(t("mount.filePreview.fileTooLarge"));
     return;
   }
 
@@ -1509,11 +1553,11 @@ const saveContent = async () => {
       });
 
       // 显示成功消息
-      const actionText = response.data?.isNewFile ? "创建" : "更新";
+      const actionText = response.data?.isNewFile ? t("mount.filePreview.fileCreated") : t("mount.filePreview.fileUpdated");
       console.log(`文件${actionText}成功: ${props.file.path}`);
     } else {
       console.error("保存文件失败:", response);
-      alert("保存文件失败: " + (response.message || "未知错误"));
+      alert(t("mount.filePreview.saveFileFailed", { message: response.message || t("common.unknown") }));
     }
   } catch (error) {
     console.error("保存文件错误:", error);
@@ -1526,9 +1570,9 @@ const saveContent = async () => {
       const responseData = error.response.data;
 
       if (status === 413 || responseData?.code === 413) {
-        errorMessage = "文件内容过大，超过服务器限制";
+        errorMessage = t("mount.filePreview.fileContentTooLarge");
       } else if (status === 403 || responseData?.code === 403) {
-        errorMessage = "没有权限更新该文件";
+        errorMessage = t("mount.filePreview.noPermissionUpdate");
       } else if (responseData?.message) {
         errorMessage = responseData.message;
       } else {
@@ -1536,13 +1580,13 @@ const saveContent = async () => {
       }
     } else if (error.request) {
       // 请求已发送但没有收到响应
-      errorMessage = "服务器无响应，请检查网络连接";
+      errorMessage = t("mount.filePreview.serverNoResponse");
     } else if (error.message) {
       // 请求设置时出现问题
       errorMessage = error.message;
     }
 
-    alert("保存文件时发生错误: " + errorMessage);
+    alert(t("mount.filePreview.saveFileError", { message: errorMessage }));
   } finally {
     isSaving.value = false;
   }

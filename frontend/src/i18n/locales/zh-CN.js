@@ -4,6 +4,7 @@ export default {
     unknown: "未知",
     loading: "加载中...",
     confirm: "确认",
+    required: "请填写必填项",
 
     // 通用权限提示
     noPermission: "无此功能权限，请联系管理员",
@@ -494,8 +495,8 @@ export default {
         storageConfigHint: "选择要使用的S3存储配置",
 
         mountPath: "挂载路径",
-        mountPathPlaceholder: "请输入挂载路径",
-        mountPathHint: "在存储中的路径，留空表示根目录",
+        mountPathPlaceholder: "例如：/documents 或 /images",
+        mountPathHint: "在存储中的路径，必须以/开头且后面跟具体路径，如：/documents、/images 等",
 
         remark: "备注",
         remarkPlaceholder: "请输入备注信息",
@@ -583,12 +584,17 @@ export default {
       // 验证错误
       validation: {
         nameRequired: "挂载点名称不能为空",
-        nameMinLength: "挂载点名称至少需要2个字符",
-        nameMaxLength: "挂载点名称不能超过50个字符",
-        storageConfigRequired: "请选择存储配置",
-        mountPathInvalid: "挂载路径格式不正确",
-        sortOrderInvalid: "排序必须是非负整数",
-        cacheTtlInvalid: "缓存时间必须是非负整数",
+        nameLength: "挂载点名称长度必须在1-50个字符之间",
+        storageTypeRequired: "请选择存储类型",
+        s3ConfigRequired: "请选择S3配置",
+        mountPathRequired: "挂载路径不能为空",
+        mountPathFormat: "挂载路径必须以/开头",
+        mountPathInvalid: "挂载路径格式不正确，必须是/xxx格式，只能包含字母、数字、下划线、连字符、中文和斜杠",
+        mountPathSystemReserved: "不能使用系统保留路径",
+        cacheTTLInteger: "缓存时间必须是整数",
+        cacheTTLNonNegative: "缓存时间不能为负数",
+        cacheTTLTooLarge: "缓存时间不能超过86400秒（24小时）",
+        sortOrderInteger: "排序顺序必须是整数",
       },
 
       // 空状态
@@ -749,6 +755,7 @@ export default {
       actions: "操作",
       selectAll: "全选",
       deselectAll: "取消全选",
+      clickToSort: "点击排序",
     },
 
     // 重命名对话框
@@ -791,8 +798,12 @@ export default {
       deleteFailedUnknown: "删除失败: {message}",
       downloadPreparing: "准备下载文件...",
       downloadSuccess: "文件下载成功",
+      downloadStarted: "开始下载 {name}",
       downloadFailed: "文件下载失败: {message}",
       downloadFailedUnknown: "文件下载失败: {message}",
+      uploading: "正在上传 {name}...",
+      initializationFailed: "初始化失败: {message}",
+      batchDeleteFailed: "批量删除失败: {message}",
       previewLoadFailed: "加载文件预览失败: {message}",
       previewLoadFailedUnknown: "加载文件预览失败: {message}",
       previewError: "文件预览加载失败",
@@ -805,6 +816,12 @@ export default {
       batchDeleteFailedUnknown: "批量删除失败: {message}",
       copySuccess: "{message}",
       copyFailed: "复制失败: {message}",
+      getFileLinkFailed: "获取文件直链失败: {message}",
+      getFileLinkError: "获取文件直链错误: {message}",
+      noItemsSelected: "请选择要操作的项目",
+      confirmBatchDelete: "确定要删除选中的 {count} 个项目吗？此操作不可撤销。",
+      uploadSuccess: "上传成功",
+      uploadFailed: "上传失败: {message}",
     },
 
     // 文件预览
@@ -841,6 +858,45 @@ export default {
       browserNotSupport: "您的浏览器不支持",
       videoTag: "视频标签",
       audioTag: "音频标签",
+
+      // 错误信息
+      cannotLoadText: "无法加载文本内容",
+      loadTextError: "加载文本内容时出错",
+      getS3LinkFailed: "获取S3直链失败: {message}",
+      s3PreviewFailed: "S3直链预览失败: {message}",
+      fileTooLarge: "文件内容过大，超过最大限制(10MB)。请减少文件大小后重试。",
+      saveFileFailed: "保存文件失败: {message}",
+      saveFileError: "保存文件时发生错误: {message}",
+      fileContentTooLarge: "文件内容过大，超过服务器限制",
+      noPermissionUpdate: "没有权限更新该文件",
+      serverNoResponse: "服务器无响应，请检查网络连接",
+
+      // 成功信息
+      fileCreated: "文件创建成功",
+      fileUpdated: "文件更新成功",
+    },
+
+    // 音频预览
+    audioPreview: {
+      loadingAudio: "正在加载音频...",
+      audioPlayer: "音频播放器",
+    },
+
+    // 通用预览
+    genericPreview: {
+      // 文件类型描述
+      applicationFile: "应用程序文件",
+      fontFile: "字体文件",
+      modelFile: "3D模型文件",
+      unsupportedType: "此文件类型不支持在线预览",
+
+      // 操作建议
+      downloadAndExtract: "请下载后使用解压软件打开",
+      downloadAndInstall: "请下载后安装或运行",
+      downloadAndOpenWithDb: "请下载后使用数据库工具打开",
+      downloadAndInstallFont: "请下载后安装字体",
+      downloadAndMount: "请下载后挂载或刻录",
+      downloadAndOpenWith: "请下载后使用相应的应用程序打开",
     },
 
     // 上传弹窗
@@ -896,6 +952,12 @@ export default {
       retryUploadSuccess: "文件 {fileName} 重新上传成功",
       retryUploadFailed: "文件 {fileName} 重新上传失败: {message}",
       retryUploadError: "文件 {fileName} 重新上传错误: {message}",
+
+      // 错误信息
+      uploadFailed: "上传失败",
+      uploadError: "上传过程中发生错误",
+      uploadCancelled: "上传已取消",
+      unknownError: "未知错误",
     },
 
     // 任务管理
@@ -964,10 +1026,32 @@ export default {
       // 状态文本
       waiting: "等待中",
       unknown: "未知",
+      unknownTime: "未知时间",
 
       // 任务创建和启动消息
       copyTaskName: "复制 {count} 个项目到 {path}",
       copyStarted: "开始复制 {count} 个项目到 {path}，可在任务管理中查看进度",
+    },
+
+    // 复制模态框
+    copyModal: {
+      title: "选择目标文件夹",
+      selectedInfo: "已选择: {count} 个项目 ({folders} 个文件夹, {files} 个文件)",
+      targetLocation: "目标位置:",
+      loading: "加载中...",
+      rootDirectory: "根目录",
+      cancel: "取消",
+      confirmCopy: "确认复制",
+      copying: "复制中...",
+
+      // 警告信息
+      warnings: {
+        recursiveCopy: "警告：不能将文件夹复制到其自身或其子目录中，这可能导致无限递归。",
+        selfCopy: "警告：不能将文件夹复制到其自身。",
+      },
+
+      // 确认对话框
+      confirmPotentialIssue: "检测到潜在问题：{warning}\n\n是否仍要继续复制？",
     },
 
     // 其他消息
