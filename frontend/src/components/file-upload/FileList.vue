@@ -54,7 +54,7 @@
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     class="h-5 w-5"
-                    :class="getFileIconClass(file.mimetype, file.filename)"
+                    :class="getFileIconClassLocal(file.mimetype, file.filename)"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -211,7 +211,7 @@
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     class="h-6 w-6"
-                    :class="getFileIconClass(file.mimetype, file.filename)"
+                    :class="getFileIconClassLocal(file.mimetype, file.filename)"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -410,7 +410,7 @@
 import { ref, defineProps, defineEmits, watch, onUnmounted } from "vue";
 import { api } from "../../api";
 import { useI18n } from "vue-i18n";
-import * as MimeTypeUtils from "../../utils/mimeTypeUtils";
+import { formatMimeType as formatMimeTypeUtil } from "../../utils/mimeUtils";
 import { copyToClipboard } from "@/utils/clipboard";
 
 const { t } = useI18n();
@@ -436,16 +436,17 @@ const props = defineProps({
 
 const emit = defineEmits(["refresh"]);
 
+// 导入统一的工具函数
+import { getRemainingViews as getRemainingViewsUtil, formatFileSize } from "../../utils/fileUtils.js";
+import { getFileIconClass as getFileIconClassUtil } from "../../utils/mimeUtils.js";
+
 /**
  * 计算剩余可访问次数
  * @param {Object} file - 文件对象
  * @returns {string|number} 剩余访问次数或状态描述
  */
 const getRemainingViews = (file) => {
-  if (!file.max_views || file.max_views === 0) return t("file.unlimited");
-  const viewCount = file.views || 0;
-  const remaining = file.max_views - viewCount;
-  return remaining <= 0 ? t("file.usedUp") : remaining;
+  return getRemainingViewsUtil(file, t);
 };
 
 // 删除状态
@@ -570,25 +571,13 @@ const startMessageTimer = () => {
   }
 };
 
-// 格式化文件大小
-const formatFileSize = (bytes) => {
-  if (bytes === 0) return "0 Bytes";
-
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-};
-
 // 格式化MIME类型
 const formatMimeType = (mimetype, filename) => {
-  return MimeTypeUtils.formatMimeType(mimetype, filename);
+  return formatMimeTypeUtil(mimetype, filename);
 };
 
-// 根据MIME类型返回文件图标颜色
-const getFileIconClass = (mimetype, filename) => {
-  return MimeTypeUtils.getFileIconClass(mimetype, props.darkMode, filename);
+const getFileIconClassLocal = (mimetype, filename) => {
+  return getFileIconClassUtil(mimetype, filename, props.darkMode);
 };
 
 // 导入统一的时间处理工具

@@ -6,10 +6,10 @@ import { copyToClipboard } from "@/utils/clipboard";
 import { useAuthStore } from "../../stores/authStore.js";
 
 // 导入子组件
-import PasteTable from "../text-management/PasteTable.vue";
-import PasteCardList from "../text-management/PasteCardList.vue";
-import PastePreviewModal from "../text-management/PastePreviewModal.vue";
-import PasteEditModal from "../text-management/PasteEditModal.vue";
+import PasteTable from "./text-management/PasteTable.vue";
+import PasteCardList from "./text-management/PasteCardList.vue";
+import PastePreviewModal from "./text-management/PastePreviewModal.vue";
+import PasteEditModal from "./text-management/PasteEditModal.vue";
 import CommonPagination from "../common/CommonPagination.vue";
 
 /**

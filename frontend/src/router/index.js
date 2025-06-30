@@ -30,19 +30,19 @@ const createOfflineAwareImport = (importFn, componentName = "页面") => {
     });
 };
 
-const MarkdownEditor = createOfflineAwareImport(() => import("../components/MarkdownEditor.vue"), "首页");
-const FileUploadPage = createOfflineAwareImport(() => import("../components/FileUpload.vue"), "文件上传页面");
-const AdminPage = createOfflineAwareImport(() => import("../components/adminManagement/AdminPage.vue"), "管理面板");
-const PasteView = createOfflineAwareImport(() => import("../components/PasteView.vue"), "文本分享页面");
-const FileView = createOfflineAwareImport(() => import("../components/FileView.vue"), "文件预览页面");
-const MountExplorer = createOfflineAwareImport(() => import("../components/MountExplorer.vue"), "挂载浏览器");
+const HomeView = createOfflineAwareImport(() => import("../views/MarkdownEditorView.vue"), "首页");
+const UploadView = createOfflineAwareImport(() => import("../views/UploadView.vue"), "文件上传页面");
+const AdminView = createOfflineAwareImport(() => import("../views/AdminView.vue"), "管理面板");
+const PasteView = createOfflineAwareImport(() => import("../views/PasteView.vue"), "文本分享页面");
+const FileView = createOfflineAwareImport(() => import("../views/FileView.vue"), "文件预览页面");
+const MountExplorerView = createOfflineAwareImport(() => import("../views/MountExplorerView.vue"), "挂载浏览器");
 
 // 路由配置 - 完全对应原有的页面逻辑
 const routes = [
   {
     path: "/",
     name: "Home",
-    component: MarkdownEditor,
+    component: HomeView,
     meta: {
       title: "CloudPaste - 在线剪贴板",
       originalPage: "home",
@@ -51,7 +51,7 @@ const routes = [
   {
     path: "/upload",
     name: "Upload",
-    component: FileUploadPage,
+    component: UploadView,
     meta: {
       title: "文件上传 - CloudPaste",
       originalPage: "upload",
@@ -60,7 +60,7 @@ const routes = [
   {
     path: "/admin",
     name: "Admin",
-    component: AdminPage,
+    component: AdminView,
     props: (route) => ({
       activeModule: route.params.module || "dashboard",
     }),
@@ -73,7 +73,7 @@ const routes = [
   {
     path: "/admin/:module",
     name: "AdminModule",
-    component: AdminPage,
+    component: AdminView,
     props: (route) => ({
       activeModule: route.params.module,
     }),
@@ -106,7 +106,7 @@ const routes = [
   {
     path: "/mount-explorer",
     name: "MountExplorer",
-    component: MountExplorer,
+    component: MountExplorerView,
     props: (route) => ({
       darkMode: route.meta.darkMode || false,
     }),
@@ -114,18 +114,18 @@ const routes = [
       title: "挂载浏览 - CloudPaste",
       originalPage: "mount-explorer",
     },
-    children: [
-      {
-        path: "",
-        name: "MountExplorerMain",
-        component: () => import("../components/mount-explorer/MountExplorerMain.vue"),
-      },
-      {
-        path: ":pathMatch(.*)*",
-        name: "MountExplorerPath",
-        component: () => import("../components/mount-explorer/MountExplorerMain.vue"),
-      },
-    ],
+  },
+  {
+    path: "/mount-explorer/:pathMatch(.*)+",
+    name: "MountExplorerPath",
+    component: MountExplorerView,
+    props: (route) => ({
+      darkMode: route.meta.darkMode || false,
+    }),
+    meta: {
+      title: "挂载浏览 - CloudPaste",
+      originalPage: "mount-explorer",
+    },
   },
   {
     path: "/:pathMatch(.*)*",
@@ -193,7 +193,7 @@ router.beforeEach(async (to, from, next) => {
     }
 
     // 挂载浏览器页面权限检查
-    if (to.name === "MountExplorer" || to.name === "MountExplorerMain" || to.name === "MountExplorerPath") {
+    if (to.name === "MountExplorer" || to.name === "MountExplorerPath") {
       // 移除自动重定向逻辑，让组件自己处理权限显示
       // 这样用户可以看到友好的"无权限"提示而不是突然被重定向
 
@@ -289,7 +289,6 @@ router.afterEach(async (to, from) => {
         title = t("pageTitle.fileView");
         break;
       case "MountExplorer":
-      case "MountExplorerMain":
       case "MountExplorerPath":
         title = t("pageTitle.mountExplorer");
         break;
