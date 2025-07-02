@@ -22,6 +22,7 @@ import {
   copyItem,
   batchCopyItems,
 } from "../services/fsService.js";
+import { searchFiles } from "../services/searchService.js";
 import { findMountPointByPath } from "../webdav/utils/webdavUtils.js";
 import { generatePresignedPutUrl, buildS3Url, createS3Client } from "../utils/s3Utils.js";
 import { directoryCacheManager, clearCache } from "../utils/DirectoryCache.js";
@@ -255,7 +256,6 @@ fsRoutes.get("/api/user/fs/download", async (c) => {
     return c.json(createErrorResponse(ApiStatus.INTERNAL_ERROR, error.message || "下载文件失败"), ApiStatus.INTERNAL_ERROR);
   }
 });
-
 
 // 创建目录 - 管理员版本
 fsRoutes.post("/api/admin/fs/mkdir", async (c) => {
@@ -1788,6 +1788,85 @@ fsRoutes.post("/api/user/fs/batch-copy-commit", baseAuthMiddleware, requireFileP
       return c.json(createErrorResponse(error.status, error.message), error.status);
     }
     return c.json(createErrorResponse(ApiStatus.INTERNAL_ERROR, error.message || "提交批量复制完成失败"), ApiStatus.INTERNAL_ERROR);
+  }
+});
+
+/**
+ * 提取搜索参数
+ * @param {Record<string, string>} queryParams - 查询参数对象
+ * @returns {Object} 搜索参数对象
+ */
+function extractSearchParams(queryParams) {
+  const query = queryParams.q || "";
+  const scope = queryParams.scope || "global"; // global, mount, directory
+  const mountId = queryParams.mount_id || "";
+  const path = queryParams.path || "";
+  const limit = parseInt(queryParams.limit) || 50;
+  const offset = parseInt(queryParams.offset) || 0;
+
+  return {
+    query,
+    scope,
+    mountId,
+    path,
+    limit: Math.min(limit, 200), // 限制最大返回数量
+    offset: Math.max(offset, 0),
+  };
+}
+
+// 搜索文件 - 管理员版本
+fsRoutes.get("/api/admin/fs/search", baseAuthMiddleware, requireAdminMiddleware, async (c) => {
+  const db = c.env.DB;
+  const searchParams = extractSearchParams(c.req.query());
+  const adminId = PermissionUtils.getUserId(c);
+
+  // 参数验证
+  if (!searchParams.query || searchParams.query.trim().length < 2) {
+    return c.json(createErrorResponse(ApiStatus.BAD_REQUEST, "搜索查询至少需要2个字符"), ApiStatus.BAD_REQUEST);
+  }
+
+  try {
+    const result = await searchFiles(db, searchParams, adminId, "admin", c.env.ENCRYPTION_SECRET);
+    return c.json({
+      code: ApiStatus.SUCCESS,
+      message: "搜索完成",
+      data: result,
+      success: true,
+    });
+  } catch (error) {
+    console.error("管理员搜索文件错误:", error);
+    if (error instanceof HTTPException) {
+      return c.json(createErrorResponse(error.status, error.message), error.status);
+    }
+    return c.json(createErrorResponse(ApiStatus.INTERNAL_ERROR, error.message || "搜索文件失败"), ApiStatus.INTERNAL_ERROR);
+  }
+});
+
+// 搜索文件 - API密钥用户版本
+fsRoutes.get("/api/user/fs/search", baseAuthMiddleware, requireFilePermissionMiddleware, async (c) => {
+  const db = c.env.DB;
+  const searchParams = extractSearchParams(c.req.query());
+  const apiKeyInfo = PermissionUtils.getApiKeyInfo(c);
+
+  // 参数验证
+  if (!searchParams.query || searchParams.query.trim().length < 2) {
+    return c.json(createErrorResponse(ApiStatus.BAD_REQUEST, "搜索查询至少需要2个字符"), ApiStatus.BAD_REQUEST);
+  }
+
+  try {
+    const result = await searchFiles(db, searchParams, apiKeyInfo, "apiKey", c.env.ENCRYPTION_SECRET);
+    return c.json({
+      code: ApiStatus.SUCCESS,
+      message: "搜索完成",
+      data: result,
+      success: true,
+    });
+  } catch (error) {
+    console.error("API密钥用户搜索文件错误:", error);
+    if (error instanceof HTTPException) {
+      return c.json(createErrorResponse(error.status, error.message), error.status);
+    }
+    return c.json(createErrorResponse(ApiStatus.INTERNAL_ERROR, error.message || "搜索文件失败"), ApiStatus.INTERNAL_ERROR);
   }
 });
 

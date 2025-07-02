@@ -308,6 +308,10 @@ const fetchCacheStats = async () => {
           cacheSize: response.data.cache?.s3Url?.cacheSize || 0,
           hitRate: response.data.cache?.s3Url?.hitRate || 0,
         },
+        search: {
+          cacheSize: response.data.cache?.search?.cacheSize || 0,
+          hitRate: response.data.cache?.search?.hitRate || 0,
+        },
         error: null,
       };
     }
@@ -669,7 +673,7 @@ onBeforeUnmount(() => {
                 </p>
                 <p v-if="!isCacheExpanded && !cacheStats.error" class="text-sm" :class="darkMode ? 'text-gray-400' : 'text-gray-600'">
                   {{ t("admin.dashboard.directoryCache") }}: {{ Math.round(cacheStats.directory.hitRate * 100) }}% | {{ t("admin.dashboard.s3UrlCache") }}:
-                  {{ Math.round(cacheStats.s3Url.hitRate * 100) }}%
+                  {{ Math.round(cacheStats.s3Url.hitRate * 100) }}% | {{ t("admin.dashboard.searchCache") }}: {{ Math.round(cacheStats.search.hitRate * 100) }}%
                 </p>
                 <p v-else-if="!isCacheExpanded && cacheStats.error" class="text-sm text-red-500">
                   {{ t("admin.dashboard.cacheUnavailable") }}
@@ -726,7 +730,7 @@ onBeforeUnmount(() => {
         <!-- 展开的详细信息 -->
         <transition name="slide-down">
           <div v-if="isCacheExpanded" class="mt-4 pt-4 border-t" :class="darkMode ? 'border-gray-600' : 'border-gray-200'">
-            <div v-if="!cacheStats.error" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div v-if="!cacheStats.error" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <!-- 目录缓存 -->
               <div class="p-3 rounded-lg" :class="darkMode ? 'bg-gray-600' : 'bg-gray-50'">
                 <p class="text-sm font-medium mb-1" :class="darkMode ? 'text-gray-300' : 'text-gray-700'">
@@ -747,6 +751,17 @@ onBeforeUnmount(() => {
                   {{ t("admin.dashboard.hitRate") }}: {{ Math.round(cacheStats.s3Url.hitRate * 100) }}%
                 </p>
                 <p class="text-sm" :class="darkMode ? 'text-gray-400' : 'text-gray-600'">{{ t("admin.dashboard.cacheItems") }}: {{ cacheStats.s3Url.cacheSize }}</p>
+              </div>
+
+              <!-- 搜索缓存 -->
+              <div class="p-3 rounded-lg" :class="darkMode ? 'bg-gray-600' : 'bg-gray-50'">
+                <p class="text-sm font-medium mb-1" :class="darkMode ? 'text-gray-300' : 'text-gray-700'">
+                  {{ t("admin.dashboard.searchCache") }}
+                </p>
+                <p class="text-lg font-semibold" :class="darkMode ? 'text-white' : 'text-gray-800'">
+                  {{ t("admin.dashboard.hitRate") }}: {{ Math.round(cacheStats.search.hitRate * 100) }}%
+                </p>
+                <p class="text-sm" :class="darkMode ? 'text-gray-400' : 'text-gray-600'">{{ t("admin.dashboard.cacheItems") }}: {{ cacheStats.search.cacheSize }}</p>
               </div>
             </div>
             <div v-else class="text-center py-4">

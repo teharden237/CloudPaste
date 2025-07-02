@@ -84,6 +84,16 @@ adminRoutes.get("/api/admin/cache/stats", baseAuthMiddleware, requireAdminMiddle
       s3UrlStats = { error: "S3URL缓存模块未加载" };
     }
 
+    // 获取搜索缓存统计
+    let searchStats = null;
+    try {
+      const { searchCacheManager } = await import("../utils/SearchCache.js");
+      searchStats = searchCacheManager.getStats();
+    } catch (error) {
+      console.warn("获取搜索缓存统计失败:", error);
+      searchStats = { error: "搜索缓存模块未加载" };
+    }
+
     // 获取系统内存使用情况
     const memUsage = process.memoryUsage();
     const systemMemory = {
@@ -102,6 +112,7 @@ adminRoutes.get("/api/admin/cache/stats", baseAuthMiddleware, requireAdminMiddle
         cache: {
           directory: dirStats,
           s3Url: s3UrlStats,
+          search: searchStats,
         },
         system: {
           memory: systemMemory,
