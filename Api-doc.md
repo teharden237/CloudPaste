@@ -1101,6 +1101,53 @@ X-Custom-Auth-Key: <api_key>
     ```
   - 响应：提交结果，包含成功和失败的文件数量
 
+- `GET /api/admin/fs/search`
+
+  - 描述：搜索文件和目录
+  - 授权：需要管理员令牌
+  - 查询参数：
+    - `query` - 搜索关键词（必填，至少 2 个字符）
+    - `scope` - 搜索范围（可选，默认为"global"）
+      - `global` - 全局搜索，搜索所有可访问的挂载点
+      - `mount` - 单个挂载点搜索，需要配合 mount_id 参数
+      - `directory` - 目录搜索，搜索指定路径及其子目录，需要配合 path 参数
+    - `mount_id` - 挂载点 ID（当 scope 为"mount"时必填）
+    - `path` - 搜索路径（当 scope 为"directory"时必填）
+    - `limit` - 结果数量限制（可选，默认 50，最大 200）
+    - `offset` - 结果偏移量（可选，默认 0）
+  - 响应：搜索结果
+    ```json
+    {
+      "code": 200,
+      "message": "搜索完成",
+      "data": {
+        "results": [
+          {
+            "name": "文件名.txt",
+            "path": "/path/to/file.txt",
+            "size": 1024,
+            "lastModified": "2023-01-01T00:00:00.000Z",
+            "isDirectory": false,
+            "mimeType": "text/plain",
+            "mountId": "mount-123",
+            "mountName": "我的存储",
+            "relativePath": "folder/file.txt"
+          }
+        ],
+        "total": 25,
+        "hasMore": false,
+        "searchParams": {
+          "query": "搜索关键词",
+          "scope": "global",
+          "limit": 50,
+          "offset": 0
+        },
+        "mountsSearched": 3
+      },
+      "success": true
+    }
+    ```
+
 #### 文件夹和文件操作 - API 密钥用户版本
 
 - `GET /api/user/fs/list`
@@ -1269,6 +1316,23 @@ X-Custom-Auth-Key: <api_key>
     }
     ```
   - 响应：提交结果，包含成功和失败的文件数量
+
+- `GET /api/user/fs/search`
+
+  - 描述：搜索文件和目录
+  - 授权：需要有文件权限的 API 密钥
+  - 查询参数：
+    - `query` - 搜索关键词（必填，至少 2 个字符）
+    - `scope` - 搜索范围（可选，默认为"global"）
+      - `global` - 全局搜索，搜索 API 密钥可访问的所有挂载点
+      - `mount` - 单个挂载点搜索，需要配合 mount_id 参数
+      - `directory` - 目录搜索，搜索指定路径及其子目录，需要配合 path 参数
+    - `mount_id` - 挂载点 ID（当 scope 为"mount"时必填）
+    - `path` - 搜索路径（当 scope 为"directory"时必填，受 basic_path 权限限制）
+    - `limit` - 结果数量限制（可选，默认 50，最大 200）
+    - `offset` - 结果偏移量（可选，默认 0）
+  - 响应：搜索结果，格式同管理员版本
+  - 注意：API 密钥用户只能搜索其 basic_path 权限范围内的文件和目录
 
 #### 分片上传 API - 管理员版本
 
@@ -1584,3 +1648,11 @@ X-Custom-Auth-Key: <api_key>
 - 系统使用目录缓存提高性能
 - 管理员和 API 密钥用户都可以手动清理缓存
 - 文件操作会自动清理相关缓存
+
+#### 搜索缓存
+
+- 搜索结果会被缓存 5 分钟，提高重复搜索的响应速度
+- 缓存键基于搜索参数、用户类型和用户信息生成
+- 文件操作（上传、删除、重命名等）会自动清理相关的搜索缓存
+- 搜索缓存支持按挂载点和用户维度进行清理
+- 管理员可以通过 `/api/admin/cache/stats` 查看搜索缓存统计信息
