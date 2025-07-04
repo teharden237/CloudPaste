@@ -202,7 +202,8 @@ fsRoutes.get("/api/admin/fs/download", async (c) => {
 
   try {
     // 直接返回downloadFile的响应，文件内容会直接从服务器流式传输
-    const response = await downloadFile(db, path, adminId, "admin", c.env.ENCRYPTION_SECRET);
+    // 传递请求对象以支持Range请求
+    const response = await downloadFile(db, path, adminId, "admin", c.env.ENCRYPTION_SECRET, c.req.raw);
 
     // 替换Access-Control-Allow-Origin头部为实际的Origin
     const origin = c.req.header("Origin");
@@ -237,7 +238,8 @@ fsRoutes.get("/api/user/fs/download", async (c) => {
 
   try {
     // 直接返回downloadFile的响应，文件内容会直接从服务器流式传输
-    const response = await downloadFile(db, path, apiKeyInfo, "apiKey", c.env.ENCRYPTION_SECRET);
+    // 传递请求对象以支持Range请求
+    const response = await downloadFile(db, path, apiKeyInfo, "apiKey", c.env.ENCRYPTION_SECRET, c.req.raw);
 
     // 替换Access-Control-Allow-Origin头部为实际的Origin
     const origin = c.req.header("Origin");

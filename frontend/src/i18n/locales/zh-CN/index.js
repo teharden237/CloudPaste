@@ -6,6 +6,7 @@ import mount from "./mount.js";
 import upload from "./upload.js";
 import fileBasket from "./fileBasket.js";
 import search from "./search.js";
+import pwa from "./pwa.js";
 
 export default {
   ...admin,
@@ -16,4 +17,5 @@ export default {
   ...upload,
   ...fileBasket,
   ...search,
+  ...pwa,
 };
