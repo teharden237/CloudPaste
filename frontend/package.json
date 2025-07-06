@@ -12,6 +12,7 @@
     "clean": "node clean-deps.js"
   },
   "dependencies": {
+    "@yeger/vue-masonry-wall": "^5.0.21",
     "aplayer": "^1.10.1",
     "artplayer": "^5.2.3",
     "autoprefixer": "^10.4.21",
@@ -24,6 +25,7 @@
     "html-to-image": "^1.11.13",
     "jszip": "^3.10.1",
     "mime-db": "^1.54.0",
+    "photoswipe": "^5.4.4",
     "pinia": "^3.0.3",
     "postcss": "^8.4.35",
     "qrcode": "^1.5.3",

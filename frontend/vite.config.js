@@ -9,7 +9,7 @@ export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
   // 🎯 统一版本管理
-  const APP_VERSION = "0.6.8";
+  const APP_VERSION = "0.6.9";
   const isDev = command === "serve";
 
   // 打印环境变量，帮助调试
@@ -105,18 +105,18 @@ export default defineConfig(({ command, mode }) => {
               },
             },
 
-            // 🖼️ 用户上传图片 - NetworkFirst（基于后端缓存策略优化）
+            // 🖼️ 图廊图片 - NetworkFirst
             {
               urlPattern: ({ request, url }) =>
                   request.destination === "image" && (url.pathname.includes("/api/") || url.searchParams.has("X-Amz-Algorithm") || url.hostname !== self.location.hostname),
               handler: "NetworkFirst",
               options: {
-                cacheName: "user-images",
+                cacheName: "gallery-images",
                 expiration: {
-                  maxEntries: 100,
-                  maxAgeSeconds: 24 * 60 * 60, // 24小时
+                  maxEntries: 300, // 增加图廊容量
+                  maxAgeSeconds: 7 * 24 * 60 * 60, // 7天（图片内容稳定）
                 },
-                networkTimeoutSeconds: 8,
+                networkTimeoutSeconds: 10, // NetworkFirst支持此参数
                 cacheableResponse: {
                   statuses: [0, 200],
                 },
@@ -195,17 +195,17 @@ export default defineConfig(({ command, mode }) => {
               },
             },
 
-            // 📁 文件系统API缓存 - NetworkFirst（与后端DirectoryCache对齐）
+            // 📁 文件系统API缓存 - NetworkFirst（图廊优化：增加容量和时间）
             {
               urlPattern: /^.*\/api\/(admin\/fs|user\/fs)\/.*$/,
               handler: "NetworkFirst",
               options: {
                 cacheName: "fs-api",
                 expiration: {
-                  maxEntries: 50,
-                  maxAgeSeconds: 5 * 60, // 5分钟（与后端DirectoryCache默认TTL对齐）
+                  maxEntries: 200, // 增加容量支持更多文件信息
+                  maxAgeSeconds: 30 * 60, // 30分钟（文件信息相对稳定）
                 },
-                networkTimeoutSeconds: 5,
+                networkTimeoutSeconds: 8, // 增加超时时间
                 cacheableResponse: {
                   statuses: [0, 200],
                 },

@@ -5,6 +5,7 @@ import App from "./App.vue";
 import api, { getEnvironmentInfo } from "./api";
 import i18n from "./i18n"; // 导入i18n配置
 import router from "./router"; // 导入路由配置
+import MasonryWall from "@yeger/vue-masonry-wall"; // 导入MasonryWall组件
 
 // 导入PWA相关模块
 import { pwaManager, pwaUtils } from "./pwa/pwaManager.js";
@@ -75,6 +76,9 @@ app.use(i18n);
 
 // 挂载路由 - 在i18n之后挂载
 app.use(router);
+
+// 挂载MasonryWall组件 - 全局注册瀑布流组件
+app.use(MasonryWall);
 
 // 导入并初始化认证Store
 import { useAuthStore } from "./stores/authStore.js";
