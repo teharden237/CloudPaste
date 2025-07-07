@@ -246,7 +246,7 @@
         class="masonry-wall-gallery"
     >
       <template #default="{ item, index }">
-        <div class="masonry-item" @click="handleItemClick(item.image)">
+        <div class="masonry-item" @click="handleItemClick(item.image)" v-context-menu="(event) => handleContextMenu(event, item.image)">
           <div class="masonry-image-container">
             <!-- 选择框 -->
             <div v-if="isCheckboxMode" class="absolute top-2 left-2 z-10" @click.stop="toggleItemSelect(item.image)">
@@ -299,94 +299,8 @@
               </div>
             </div>
 
-            <!-- 悬浮操作层 -->
+            <!-- 悬浮操作层 - 现在使用上下文菜单 -->
             <div class="masonry-overlay">
-              <!-- 操作菜单按钮 -->
-              <div class="absolute top-2 right-2">
-                <div class="relative">
-                  <!-- 三个小点按钮 -->
-                  <button
-                      @click.stop="toggleImageMenu(item.image.path)"
-                      class="p-1.5 rounded-full backdrop-blur-sm transition-all duration-200"
-                      :class="darkMode ? 'bg-black/40 hover:bg-black/60 text-white' : 'bg-white/40 hover:bg-white/60 text-gray-800'"
-                      data-menu-button
-                  >
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
-                    </svg>
-                  </button>
-
-                  <!-- 下拉菜单 -->
-                  <div
-                      v-if="activeImageMenu === item.image.path"
-                      class="absolute top-full right-0 mt-1 w-40 rounded-md shadow-lg z-50 backdrop-blur-sm"
-                      :class="darkMode ? 'bg-gray-800/90 border border-gray-600' : 'bg-white/90 border border-gray-200'"
-                      data-menu-content
-                  >
-                    <div class="py-1">
-                      <!-- 下载 -->
-                      <button
-                          @click.stop="handleDownload(item.image)"
-                          class="w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors"
-                          :class="darkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-100 text-gray-700'"
-                      >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        {{ t("mount.fileItem.download") }}
-                      </button>
-
-                      <!-- 获取链接 -->
-                      <button
-                          @click.stop="handleGetLink(item.image)"
-                          class="w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors"
-                          :class="darkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-100 text-gray-700'"
-                      >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" />
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.172 13.828a4 4 0 015.656 0l4 4a4 4 0 01-5.656 5.656l-1.102-1.101" />
-                        </svg>
-                        {{ t("mount.fileItem.getLink") }}
-                      </button>
-
-                      <!-- 重命名 -->
-                      <button
-                          @click.stop="handleRename(item.image)"
-                          class="w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors"
-                          :class="darkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-100 text-gray-700'"
-                      >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                          />
-                        </svg>
-                        {{ t("mount.fileItem.rename") }}
-                      </button>
-
-                      <!-- 删除 -->
-                      <button
-                          @click.stop="handleDelete(item.image)"
-                          class="w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors"
-                          :class="darkMode ? 'hover:bg-red-600 text-red-400 hover:text-white' : 'hover:bg-red-50 text-red-600'"
-                      >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
-                        {{ t("mount.fileItem.delete") }}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               <!-- 图片信息（保留原有的悬浮信息） -->
               <div class="masonry-info">
                 <div class="text-sm font-medium truncate">{{ item.image.name }}</div>
@@ -445,6 +359,7 @@ import { usePhotoSwipe } from "@/composables/ui-interaction/usePhotoSwipe";
 import { getFileIcon } from "@/utils/fileTypeIcons";
 import { formatFileSize } from "@/utils/fileUtils";
 import MasonryWall from "@yeger/vue-masonry-wall";
+import ContextMenu from "@imengyu/vue3-context-menu";
 
 const { t } = useI18n();
 
@@ -588,8 +503,62 @@ const getPlaceholderStyle = () => {
   };
 };
 
-// 操作菜单状态管理
-const activeImageMenu = ref(null);
+// 设备检测函数已在contextMenu指令中实现，这里不需要重复定义
+
+// 上下文菜单处理
+const handleContextMenu = ({ x, y, isMobile }, image) => {
+  console.log(`${isMobile ? "📱 长按" : "🖱️ 右键"}触发上下文菜单:`, image.name);
+
+  // 构建菜单项
+  const menuItems = [
+    {
+      label: t("mount.fileItem.download"),
+      svgIcon: "#icon-download",
+      svgProps: {
+        width: "16",
+        height: "16",
+      },
+      onClick: () => handleDownload(image),
+    },
+    {
+      label: t("mount.fileItem.getLink"),
+      svgIcon: "#icon-link",
+      svgProps: {
+        width: "16",
+        height: "16",
+      },
+      onClick: () => handleGetLink(image),
+    },
+    {
+      label: t("mount.fileItem.rename"),
+      svgIcon: "#icon-edit",
+      svgProps: {
+        width: "16",
+        height: "16",
+      },
+      onClick: () => handleRename(image),
+    },
+    {
+      label: t("mount.fileItem.delete"),
+      svgIcon: "#icon-delete",
+      svgProps: {
+        width: "16",
+        height: "16",
+      },
+      onClick: () => handleDelete(image),
+    },
+  ];
+
+  // 显示上下文菜单
+  ContextMenu.showContextMenu({
+    x,
+    y,
+    items: menuItems,
+    theme: props.darkMode ? "default dark" : "default",
+    zIndex: 9999,
+    minWidth: 160,
+  });
+};
 
 // 懒加载：IntersectionObserver实现
 const imageObserver = ref(null);
@@ -692,14 +661,6 @@ const handleClickOutside = (event) => {
     showSortMenu.value = false;
     showViewSettings.value = false;
   }
-
-  // 关闭图片操作菜单
-  const isMenuButton = event.target.closest("[data-menu-button]");
-  const isMenuContent = event.target.closest("[data-menu-content]");
-
-  if (!isMenuButton && !isMenuContent && activeImageMenu.value) {
-    activeImageMenu.value = null;
-  }
 };
 
 // 事件处理 - 集成PhotoSwipe预览
@@ -747,36 +708,23 @@ const isItemSelected = (item) => {
 
 // ===== 操作菜单相关方法 =====
 
-// 切换图片操作菜单
-const toggleImageMenu = (imagePath) => {
-  if (activeImageMenu.value === imagePath) {
-    activeImageMenu.value = null;
-  } else {
-    activeImageMenu.value = imagePath;
-  }
-};
-
 // 处理下载操作
 const handleDownload = (image) => {
-  activeImageMenu.value = null;
   emit("download", image);
 };
 
 // 处理获取链接操作
 const handleGetLink = (image) => {
-  activeImageMenu.value = null;
   emit("getLink", image);
 };
 
 // 处理重命名操作
 const handleRename = (image) => {
-  activeImageMenu.value = null;
   emit("rename", image);
 };
 
 // 处理删除操作
 const handleDelete = (image) => {
-  activeImageMenu.value = null;
   emit("delete", image);
 };
 

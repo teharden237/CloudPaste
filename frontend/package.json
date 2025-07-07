@@ -12,6 +12,7 @@
     "clean": "node clean-deps.js"
   },
   "dependencies": {
+    "@imengyu/vue3-context-menu": "^1.5.1",
     "@yeger/vue-masonry-wall": "^5.0.21",
     "aplayer": "^1.10.1",
     "artplayer": "^5.2.3",

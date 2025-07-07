@@ -7,6 +7,13 @@ import i18n from "./i18n"; // 导入i18n配置
 import router from "./router"; // 导入路由配置
 import MasonryWall from "@yeger/vue-masonry-wall"; // 导入MasonryWall组件
 
+// 导入vue3-context-menu
+import "@imengyu/vue3-context-menu/lib/vue3-context-menu.css";
+import ContextMenu from "@imengyu/vue3-context-menu";
+
+// 导入自定义指令
+import { contextMenuDirective } from "./components/common/contextMenu.js";
+
 // 导入PWA相关模块
 import { pwaManager, pwaUtils } from "./pwa/pwaManager.js";
 
@@ -79,6 +86,12 @@ app.use(router);
 
 // 挂载MasonryWall组件 - 全局注册瀑布流组件
 app.use(MasonryWall);
+
+// 挂载vue3-context-menu - 全局注册上下文菜单组件
+app.use(ContextMenu);
+
+// 注册自定义指令
+app.directive("context-menu", contextMenuDirective);
 
 // 导入并初始化认证Store
 import { useAuthStore } from "./stores/authStore.js";
