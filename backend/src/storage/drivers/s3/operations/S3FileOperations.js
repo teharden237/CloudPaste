@@ -123,75 +123,26 @@ export class S3FileOperations {
     const { mount, path, userType, userId } = options;
 
     return handleFsError(
-      async () => {
-        // 首先尝试HEAD请求获取文件元数据
-        const headParams = {
-          Bucket: this.config.bucket_name,
-          Key: s3SubPath,
-        };
-
-        try {
-          const headCommand = new HeadObjectCommand(headParams);
-          const headResponse = await this.s3Client.send(headCommand);
-
-          // 构建文件信息对象
-          const result = {
-            path: path,
-            name: path.split("/").filter(Boolean).pop() || "/",
-            isDirectory: false,
-            size: headResponse.ContentLength || 0,
-            modified: headResponse.LastModified ? headResponse.LastModified.toISOString() : new Date().toISOString(),
-            contentType: headResponse.ContentType || "application/octet-stream",
-            etag: headResponse.ETag ? headResponse.ETag.replace(/"/g, "") : undefined,
-            mount_id: mount.id,
-            storage_type: mount.storage_type,
+        async () => {
+          // 首先尝试HEAD请求获取文件元数据
+          const headParams = {
+            Bucket: this.config.bucket_name,
+            Key: s3SubPath,
           };
 
-          // 生成预签名URL（如果需要）
-          if (userType && userId) {
-            try {
-              const cacheOptions = {
-                userType,
-                userId,
-                enableCache: mount.cache_ttl > 0,
-              };
+          try {
+            const headCommand = new HeadObjectCommand(headParams);
+            const headResponse = await this.s3Client.send(headCommand);
 
-              // 生成预览URL（不强制下载）
-              const previewUrl = await generatePresignedUrl(this.config, s3SubPath, this.encryptionSecret, null, false, null, cacheOptions);
-              result.preview_url = previewUrl;
-
-              // 生成下载URL（强制下载）
-              const downloadUrl = await generatePresignedUrl(this.config, s3SubPath, this.encryptionSecret, null, true, null, cacheOptions);
-              result.download_url = downloadUrl;
-
-              console.log(`为文件[${result.name}]生成预签名URL: ✓预览 ✓下载`);
-            } catch (urlError) {
-              console.warn(`生成预签名URL失败: ${urlError.message}`);
-            }
-          }
-
-          console.log(`getFileInfo - 文件[${result.name}], S3 ContentType[${headResponse.ContentType}]`);
-          return result;
-        } catch (headError) {
-          // 如果HEAD失败，尝试GET请求（某些S3服务可能不支持HEAD）
-          if (headError.$metadata?.httpStatusCode === 405) {
-            const getParams = {
-              Bucket: this.config.bucket_name,
-              Key: s3SubPath,
-              Range: "bytes=0-0", // 只获取第一个字节来检查文件存在性
-            };
-
-            const getCommand = new GetObjectCommand(getParams);
-            const getResponse = await this.s3Client.send(getCommand);
-
+            // 构建文件信息对象
             const result = {
               path: path,
               name: path.split("/").filter(Boolean).pop() || "/",
               isDirectory: false,
-              size: getResponse.ContentLength || 0,
-              modified: getResponse.LastModified ? getResponse.LastModified.toISOString() : new Date().toISOString(),
-              contentType: getResponse.ContentType || "application/octet-stream",
-              etag: getResponse.ETag ? getResponse.ETag.replace(/"/g, "") : undefined,
+              size: headResponse.ContentLength || 0,
+              modified: headResponse.LastModified ? headResponse.LastModified.toISOString() : new Date().toISOString(),
+              contentType: headResponse.ContentType || "application/octet-stream",
+              etag: headResponse.ETag ? headResponse.ETag.replace(/"/g, "") : undefined,
               mount_id: mount.id,
               storage_type: mount.storage_type,
             };
@@ -213,20 +164,75 @@ export class S3FileOperations {
                 const downloadUrl = await generatePresignedUrl(this.config, s3SubPath, this.encryptionSecret, null, true, null, cacheOptions);
                 result.download_url = downloadUrl;
 
-                console.log(`为文件[${result.name}]生成预签名URL(GET): ✓预览 ✓下载`);
+                console.log(`为文件[${result.name}]生成预签名URL: ✓预览 ✓下载`);
               } catch (urlError) {
-                console.warn(`生成预签名URL失败(GET): ${urlError.message}`);
+                console.warn(`生成预签名URL失败: ${urlError.message}`);
               }
             }
 
-            console.log(`getFileInfo(GET) - 文件[${result.name}], S3 ContentType[${getResponse.ContentType}]`);
+            console.log(`getFileInfo - 文件[${result.name}], S3 ContentType[${headResponse.ContentType}]`);
             return result;
+          } catch (headError) {
+            // 如果HEAD失败，尝试GET请求（某些S3服务可能不支持HEAD）
+            if (headError.$metadata?.httpStatusCode === 405) {
+              const getParams = {
+                Bucket: this.config.bucket_name,
+                Key: s3SubPath,
+                Range: "bytes=0-0", // 只获取第一个字节来检查文件存在性
+              };
+
+              const getCommand = new GetObjectCommand(getParams);
+              const getResponse = await this.s3Client.send(getCommand);
+
+              const result = {
+                path: path,
+                name: path.split("/").filter(Boolean).pop() || "/",
+                isDirectory: false,
+                size: getResponse.ContentLength || 0,
+                modified: getResponse.LastModified ? getResponse.LastModified.toISOString() : new Date().toISOString(),
+                contentType: getResponse.ContentType || "application/octet-stream",
+                etag: getResponse.ETag ? getResponse.ETag.replace(/"/g, "") : undefined,
+                mount_id: mount.id,
+                storage_type: mount.storage_type,
+              };
+
+              // 生成预签名URL（如果需要）
+              if (userType && userId) {
+                try {
+                  const cacheOptions = {
+                    userType,
+                    userId,
+                    enableCache: mount.cache_ttl > 0,
+                  };
+
+                  // 生成预览URL（不强制下载）
+                  const previewUrl = await generatePresignedUrl(this.config, s3SubPath, this.encryptionSecret, null, false, null, cacheOptions);
+                  result.preview_url = previewUrl;
+
+                  // 生成下载URL（强制下载）
+                  const downloadUrl = await generatePresignedUrl(this.config, s3SubPath, this.encryptionSecret, null, true, null, cacheOptions);
+                  result.download_url = downloadUrl;
+
+                  console.log(`为文件[${result.name}]生成预签名URL(GET): ✓预览 ✓下载`);
+                } catch (urlError) {
+                  console.warn(`生成预签名URL失败(GET): ${urlError.message}`);
+                }
+              }
+
+              console.log(`getFileInfo(GET) - 文件[${result.name}], S3 ContentType[${getResponse.ContentType}]`);
+              return result;
+            }
+
+            // 检查是否是NotFound错误，转换为HTTPException
+            if (headError.$metadata?.httpStatusCode === 404 || headError.name === "NotFound") {
+              throw new HTTPException(ApiStatus.NOT_FOUND, { message: "文件不存在" });
+            }
+
+            throw headError;
           }
-          throw headError;
-        }
-      },
-      "获取文件信息",
-      "获取文件信息失败"
+        },
+        "获取文件信息",
+        "获取文件信息失败"
     );
   }
 
@@ -239,12 +245,12 @@ export class S3FileOperations {
    */
   async downloadFile(s3SubPath, fileName, request = null) {
     return handleFsError(
-      async () => {
-        // 使用现有的getFileFromS3函数
-        return await this.getFileFromS3(this.config, s3SubPath, fileName, false, this.encryptionSecret, request);
-      },
-      "下载文件",
-      "下载文件失败"
+        async () => {
+          // 使用现有的getFileFromS3函数
+          return await this.getFileFromS3(this.config, s3SubPath, fileName, false, this.encryptionSecret, request);
+        },
+        "下载文件",
+        "下载文件失败"
     );
   }
 
@@ -258,29 +264,29 @@ export class S3FileOperations {
     const { expiresIn = 604800, forceDownload = false, userType, userId, mount } = options;
 
     return handleFsError(
-      async () => {
-        const cacheOptions = {
-          userType,
-          userId,
-          enableCache: mount?.cache_ttl > 0,
-        };
+        async () => {
+          const cacheOptions = {
+            userType,
+            userId,
+            enableCache: mount?.cache_ttl > 0,
+          };
 
-        const presignedUrl = await generatePresignedUrl(this.config, s3SubPath, this.encryptionSecret, expiresIn, forceDownload, null, cacheOptions);
+          const presignedUrl = await generatePresignedUrl(this.config, s3SubPath, this.encryptionSecret, expiresIn, forceDownload, null, cacheOptions);
 
-        // 提取文件名
-        const fileName = s3SubPath.split("/").filter(Boolean).pop() || "file";
+          // 提取文件名
+          const fileName = s3SubPath.split("/").filter(Boolean).pop() || "file";
 
-        return {
-          success: true,
-          presignedUrl: presignedUrl,
-          name: fileName,
-          expiresIn: expiresIn,
-          expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString(),
-          forceDownload: forceDownload,
-        };
-      },
-      "获取文件预签名URL",
-      "获取文件预签名URL失败"
+          return {
+            success: true,
+            presignedUrl: presignedUrl,
+            name: fileName,
+            expiresIn: expiresIn,
+            expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString(),
+            forceDownload: forceDownload,
+          };
+        },
+        "获取文件预签名URL",
+        "获取文件预签名URL失败"
     );
   }
 
@@ -319,60 +325,60 @@ export class S3FileOperations {
     const { fileName } = options;
 
     return handleFsError(
-      async () => {
-        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+        async () => {
+          const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-        // 检查内容大小
-        if (typeof content === "string" && content.length > MAX_FILE_SIZE) {
-          throw new HTTPException(ApiStatus.BAD_REQUEST, { message: "文件内容过大，超过最大限制(10MB)" });
-        } else if (content instanceof ArrayBuffer && content.byteLength > MAX_FILE_SIZE) {
-          throw new HTTPException(ApiStatus.BAD_REQUEST, { message: "文件内容过大，超过最大限制(10MB)" });
-        }
+          // 检查内容大小
+          if (typeof content === "string" && content.length > MAX_FILE_SIZE) {
+            throw new HTTPException(ApiStatus.BAD_REQUEST, { message: "文件内容过大，超过最大限制(10MB)" });
+          } else if (content instanceof ArrayBuffer && content.byteLength > MAX_FILE_SIZE) {
+            throw new HTTPException(ApiStatus.BAD_REQUEST, { message: "文件内容过大，超过最大限制(10MB)" });
+          }
 
-        // 推断MIME类型
-        const contentType = getMimeTypeFromFilename(fileName || s3SubPath);
+          // 推断MIME类型
+          const contentType = getMimeTypeFromFilename(fileName || s3SubPath);
 
-        // 首先检查文件是否存在，获取原始元数据
-        let originalMetadata = null;
-        try {
-          const headParams = {
+          // 首先检查文件是否存在，获取原始元数据
+          let originalMetadata = null;
+          try {
+            const headParams = {
+              Bucket: this.config.bucket_name,
+              Key: s3SubPath,
+            };
+            const headCommand = new HeadObjectCommand(headParams);
+            originalMetadata = await this.s3Client.send(headCommand);
+          } catch (error) {
+            if (error.$metadata?.httpStatusCode !== 404) {
+              console.warn(`获取原始文件元数据失败: ${error.message}`);
+            }
+            // 404错误表示文件不存在，这是正常的（创建新文件）
+          }
+
+          const putParams = {
             Bucket: this.config.bucket_name,
             Key: s3SubPath,
+            Body: content,
+            ContentType: contentType,
           };
-          const headCommand = new HeadObjectCommand(headParams);
-          originalMetadata = await this.s3Client.send(headCommand);
-        } catch (error) {
-          if (error.$metadata?.httpStatusCode !== 404) {
-            console.warn(`获取原始文件元数据失败: ${error.message}`);
-          }
-          // 404错误表示文件不存在，这是正常的（创建新文件）
-        }
 
-        const putParams = {
-          Bucket: this.config.bucket_name,
-          Key: s3SubPath,
-          Body: content,
-          ContentType: contentType,
-        };
+          console.log(`准备更新S3对象: ${s3SubPath}, 内容类型: ${contentType}`);
+          const putCommand = new PutObjectCommand(putParams);
+          const result = await this.s3Client.send(putCommand);
 
-        console.log(`准备更新S3对象: ${s3SubPath}, 内容类型: ${contentType}`);
-        const putCommand = new PutObjectCommand(putParams);
-        const result = await this.s3Client.send(putCommand);
+          // 更新父目录的修改时间
+          await updateParentDirectoriesModifiedTime(this.s3Client, this.config.bucket_name, s3SubPath);
 
-        // 更新父目录的修改时间
-        await updateParentDirectoriesModifiedTime(this.s3Client, this.config.bucket_name, s3SubPath);
-
-        return {
-          success: true,
-          path: s3SubPath,
-          etag: result.ETag ? result.ETag.replace(/"/g, "") : undefined,
-          contentType: contentType,
-          message: "文件更新成功",
-          isNewFile: !originalMetadata,
-        };
-      },
-      "更新文件",
-      "更新文件失败"
+          return {
+            success: true,
+            path: s3SubPath,
+            etag: result.ETag ? result.ETag.replace(/"/g, "") : undefined,
+            contentType: contentType,
+            message: "文件更新成功",
+            isNewFile: !originalMetadata,
+          };
+        },
+        "更新文件",
+        "更新文件失败"
     );
   }
 
@@ -385,61 +391,61 @@ export class S3FileOperations {
    */
   async renameFile(oldS3SubPath, newS3SubPath, options = {}) {
     return handleFsError(
-      async () => {
-        // 检查源文件是否存在
-        const headParams = {
-          Bucket: this.config.bucket_name,
-          Key: oldS3SubPath,
-        };
-        const headCommand = new HeadObjectCommand(headParams);
-        await this.s3Client.send(headCommand);
-
-        // 检查目标文件是否已存在
-        try {
-          const targetHeadParams = {
+        async () => {
+          // 检查源文件是否存在
+          const headParams = {
             Bucket: this.config.bucket_name,
+            Key: oldS3SubPath,
+          };
+          const headCommand = new HeadObjectCommand(headParams);
+          await this.s3Client.send(headCommand);
+
+          // 检查目标文件是否已存在
+          try {
+            const targetHeadParams = {
+              Bucket: this.config.bucket_name,
+              Key: newS3SubPath,
+            };
+            const targetHeadCommand = new HeadObjectCommand(targetHeadParams);
+            await this.s3Client.send(targetHeadCommand);
+
+            // 如果没有抛出异常，说明目标文件已存在
+            throw new HTTPException(ApiStatus.CONFLICT, { message: "目标文件已存在" });
+          } catch (error) {
+            if (error.$metadata?.httpStatusCode !== 404) {
+              throw error; // 如果不是404错误，说明是其他问题
+            }
+            // 404表示目标文件不存在，可以继续重命名
+          }
+
+          // 复制文件到新位置
+          const copyParams = {
+            Bucket: this.config.bucket_name,
+            CopySource: encodeURIComponent(this.config.bucket_name + "/" + oldS3SubPath),
             Key: newS3SubPath,
           };
-          const targetHeadCommand = new HeadObjectCommand(targetHeadParams);
-          await this.s3Client.send(targetHeadCommand);
 
-          // 如果没有抛出异常，说明目标文件已存在
-          throw new HTTPException(ApiStatus.CONFLICT, { message: "目标文件已存在" });
-        } catch (error) {
-          if (error.$metadata?.httpStatusCode !== 404) {
-            throw error; // 如果不是404错误，说明是其他问题
-          }
-          // 404表示目标文件不存在，可以继续重命名
-        }
+          const copyCommand = new CopyObjectCommand(copyParams);
+          await this.s3Client.send(copyCommand);
 
-        // 复制文件到新位置
-        const copyParams = {
-          Bucket: this.config.bucket_name,
-          CopySource: encodeURIComponent(this.config.bucket_name + "/" + oldS3SubPath),
-          Key: newS3SubPath,
-        };
+          // 删除原文件
+          const deleteParams = {
+            Bucket: this.config.bucket_name,
+            Key: oldS3SubPath,
+          };
 
-        const copyCommand = new CopyObjectCommand(copyParams);
-        await this.s3Client.send(copyCommand);
+          const deleteCommand = new DeleteObjectCommand(deleteParams);
+          await this.s3Client.send(deleteCommand);
 
-        // 删除原文件
-        const deleteParams = {
-          Bucket: this.config.bucket_name,
-          Key: oldS3SubPath,
-        };
-
-        const deleteCommand = new DeleteObjectCommand(deleteParams);
-        await this.s3Client.send(deleteCommand);
-
-        return {
-          success: true,
-          oldPath: oldS3SubPath,
-          newPath: newS3SubPath,
-          message: "文件重命名成功",
-        };
-      },
-      "重命名文件",
-      "重命名文件失败"
+          return {
+            success: true,
+            oldPath: oldS3SubPath,
+            newPath: newS3SubPath,
+            message: "文件重命名成功",
+          };
+        },
+        "重命名文件",
+        "重命名文件失败"
     );
   }
 

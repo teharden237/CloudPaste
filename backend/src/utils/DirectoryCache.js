@@ -5,6 +5,7 @@
 import { BaseCache } from "./BaseCache.js";
 import { clearS3UrlCache } from "./S3UrlCache.js";
 import { clearSearchCache } from "./SearchCache.js";
+import { normalizePath } from "../storage/fs/utils/PathResolver.js";
 
 class DirectoryCacheManager extends BaseCache {
   /**
@@ -31,8 +32,12 @@ class DirectoryCacheManager extends BaseCache {
    * @returns {string} - 缓存键
    */
   generateKey(mountId, path) {
+    // 规范化路径：确保目录路径的一致性
+    // 对于目录缓存，统一将路径规范化为目录格式（以/结尾）
+    const normalizedPath = normalizePath(path, true);
+
     // 使用 Base64 编码路径，避免特殊字符问题
-    const encodedPath = Buffer.from(path).toString("base64");
+    const encodedPath = Buffer.from(normalizedPath).toString("base64");
     return `${mountId}:${encodedPath}`;
   }
 
@@ -177,13 +182,13 @@ export async function clearCache(options = {}) {
     if (db && s3ConfigId) {
       // 获取与S3配置相关的所有挂载点
       const mounts = await db
-        .prepare(
-          `SELECT m.id
+          .prepare(
+              `SELECT m.id
            FROM storage_mounts m
            WHERE m.storage_type = 'S3' AND m.storage_config_id = ?`
-        )
-        .bind(s3ConfigId)
-        .all();
+          )
+          .bind(s3ConfigId)
+          .all();
 
       if (!mounts?.results?.length) {
         console.log(`未找到与S3配置 ${s3ConfigId} 关联的挂载点`);

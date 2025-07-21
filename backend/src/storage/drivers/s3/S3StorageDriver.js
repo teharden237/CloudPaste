@@ -97,7 +97,7 @@ export class S3StorageDriver extends BaseDriver {
     // 委托给目录操作模块
     return await this.directoryOps.listDirectory(s3SubPath, {
       mount,
-      subPath,
+      subPath, // 使用正确的子路径用于缓存键生成
       path,
     });
   }
@@ -677,26 +677,26 @@ export class S3StorageDriver extends BaseDriver {
 
       // 记录文件信息到数据库
       await db
-        .prepare(
-          `
+          .prepare(
+              `
         INSERT INTO files (
           id, filename, storage_path, s3_url, mimetype, size, s3_config_id, slug, etag, created_by, created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       `
-        )
-        .bind(
-          fileId,
-          fileName,
-          s3SubPath,
-          result.s3Url,
-          finalContentType,
-          fileSize || 0,
-          this.config.id,
-          fileSlug,
-          result.etag,
-          `${userType}:${userType === "apiKey" ? userIdOrInfo.id : userIdOrInfo}`
-        )
-        .run();
+          )
+          .bind(
+              fileId,
+              fileName,
+              s3SubPath,
+              result.s3Url,
+              finalContentType,
+              fileSize || 0,
+              this.config.id,
+              fileSlug,
+              result.etag,
+              `${userType}:${userType === "apiKey" ? userIdOrInfo.id : userIdOrInfo}`
+          )
+          .run();
     } else {
       console.log(`后端分片上传完成但跳过数据库记录 (路径: ${path})`);
     }
