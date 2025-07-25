@@ -67,7 +67,7 @@ export default defineConfig(({ command, mode }) => {
               },
             },
 
-            // 🔤 字体文件 - CacheFirst（字体很少变化，可长期缓存）
+            // 🔤 字体文件 - CacheFirst
             {
               urlPattern: ({ request }) => request.destination === "font",
               handler: "CacheFirst",
@@ -195,7 +195,7 @@ export default defineConfig(({ command, mode }) => {
               },
             },
 
-            // 📁 文件系统API缓存 - NetworkFirst（图廊优化：增加容量和时间）
+            // 📁 文件系统API缓存 - NetworkFirst
             {
               urlPattern: /^.*\/api\/fs\/.*$/,
               handler: "NetworkFirst",
