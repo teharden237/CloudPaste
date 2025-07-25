@@ -78,12 +78,12 @@
               <dl class="grid grid-cols-3 gap-x-4 gap-y-2 text-sm">
                 <dt :class="darkMode ? 'text-gray-400' : 'text-gray-500'">存储配置</dt>
                 <dd class="col-span-2" :class="darkMode ? 'text-white' : 'text-gray-900'">
-                  {{ file.s3_config_name || "默认存储" }}
+                  {{ file.storage_config_name || "默认存储" }}
                 </dd>
 
                 <dt :class="darkMode ? 'text-gray-400' : 'text-gray-500'">提供商</dt>
                 <dd class="col-span-2" :class="darkMode ? 'text-white' : 'text-gray-900'">
-                  {{ file.s3_provider_type || "未知" }}
+                  {{ file.storage_provider_type || "未知" }}
                 </dd>
 
                 <dt :class="darkMode ? 'text-gray-400' : 'text-gray-500'">存储路径</dt>

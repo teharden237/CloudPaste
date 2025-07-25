@@ -9,7 +9,7 @@ export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
   // 🎯 统一版本管理
-  const APP_VERSION = "0.7.0";
+  const APP_VERSION = "0.7.3";
   const isDev = command === "serve";
 
   // 打印环境变量，帮助调试
@@ -214,7 +214,7 @@ export default defineConfig(({ command, mode }) => {
 
             // 📝 文本分享API缓存 - NetworkFirst（内容短期缓存）
             {
-              urlPattern: /^.*\/api\/(admin\/pastes|user\/pastes|paste|raw|public\/pastes)\/.*$/,
+              urlPattern: /^.*\/api\/(pastes|paste|raw)\/.*$/,
               handler: "NetworkFirst",
               options: {
                 cacheName: "pastes-api",
@@ -231,7 +231,7 @@ export default defineConfig(({ command, mode }) => {
 
             // 🗂️ 配置管理API缓存 - NetworkFirst（配置信息适度缓存）
             {
-              urlPattern: /^.*\/api\/(admin\/mounts|user\/mounts|s3-configs|admin\/api-keys|admin\/settings)\/.*$/,
+              urlPattern: /^.*\/api\/(admin\/mounts|admin\/api-keys|admin\/system-settings|files)\/.*$/,
               handler: "NetworkFirst",
               options: {
                 cacheName: "config-api",
