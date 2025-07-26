@@ -125,6 +125,16 @@ export class S3StorageDriver extends BaseDriver {
       await updateMountLastUsed(db, mount.id);
     }
 
+    // 特殊处理：当s3SubPath为空字符串时（访问挂载点根目录），直接作为目录处理
+    // 因为S3对象Key不能为空字符串，所以空字符串永远不可能是有效的文件
+    if (s3SubPath === "") {
+      console.log(`getFileInfo - 检测到挂载点根目录访问，直接作为目录处理: ${path}`);
+      return await this.directoryOps.getDirectoryInfo(s3SubPath, {
+        mount,
+        path,
+      });
+    }
+
     try {
       // 首先尝试作为文件获取信息
       return await this.fileOps.getFileInfo(s3SubPath, {
