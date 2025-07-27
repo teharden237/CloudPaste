@@ -305,7 +305,7 @@ export async function verifyPastePassword(db, slug, password, incrementViews = t
   }
 
   return {
-    id: paste.id,
+    id: paste.id, 
     slug: paste.slug,
     content: paste.content,
     remark: paste.remark,
