@@ -239,17 +239,14 @@ export class FileShareService {
 
     // 处理过期时间
     let expiresAt = null;
-    if (expires_in) {
-      const expiresInHours = parseInt(expires_in);
-      if (!isNaN(expiresInHours) && expiresInHours > 0) {
-        const expiresDate = new Date();
-        expiresDate.setHours(expiresDate.getHours() + expiresInHours);
-        expiresAt = expiresDate.toISOString();
-      }
+    if (typeof expires_in === "number" && expires_in > 0) {
+      const expiresDate = new Date();
+      expiresDate.setHours(expiresDate.getHours() + expires_in);
+      expiresAt = expiresDate.toISOString();
     }
 
     // 处理最大查看次数
-    const maxViews = max_views ? parseInt(max_views) : null;
+    const maxViews = typeof max_views === "number" && max_views > 0 ? max_views : null;
 
     // 创建文件记录
     const fileRepository = this.repositoryFactory.getFileRepository();
