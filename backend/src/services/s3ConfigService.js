@@ -298,7 +298,7 @@ class S3ConfigService {
     }
 
     // 检查是否有文件使用此配置
-    const filesCount = await this.fileRepository.countByS3ConfigId(id);
+    const filesCount = await this.fileRepository.countByStorageConfigId(id, "S3");
     if (filesCount > 0) {
       throw new HTTPException(ApiStatus.CONFLICT, { message: `无法删除此配置，因为有${filesCount}个文件正在使用它` });
     }
@@ -824,13 +824,13 @@ async function executeFrontendSimulationTest(testResult, strategy) {
     try {
       // 获取预签名URL
       const presignedUrl = await getSignedUrl(
-        strategy.s3Client,
-        new PutObjectCommand({
-          Bucket: strategy.config.bucket_name,
-          Key: testKey,
-          ContentType: testContentType,
-        }),
-        { expiresIn: strategy.config.signature_expires_in || 300 }
+          strategy.s3Client,
+          new PutObjectCommand({
+            Bucket: strategy.config.bucket_name,
+            Key: testKey,
+            ContentType: testContentType,
+          }),
+          { expiresIn: strategy.config.signature_expires_in || 300 }
       );
 
       // 模拟前端上传请求头（根据不同提供商定制）
