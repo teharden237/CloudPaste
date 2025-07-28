@@ -48,7 +48,7 @@ export default {
       keyManagement: "Key Management",
       settings: "System Settings",
       globalSettings: "Global Settings",
-      accountSettings: "Account Settings",
+      accountSettings: "Account Management",
       webdavSettings: "WebDAV Settings",
     },
   },

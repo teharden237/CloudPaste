@@ -10,29 +10,28 @@ import { showPageUnavailableToast } from "../utils/offlineToast.js";
 // 懒加载组件 - 添加离线错误处理
 const createOfflineAwareImport = (importFn, componentName = "页面") => {
   return () =>
-      importFn().catch((error) => {
-        console.error("组件加载失败:", error);
+    importFn().catch((error) => {
+      console.error("组件加载失败:", error);
 
-        // 如果是离线状态且加载失败，显示离线回退页面和Toast提示
-        if (pwaState.isOffline || !navigator.onLine) {
-          console.log("[离线模式] 组件未缓存，显示离线回退页面");
+      // 如果是离线状态且加载失败，显示离线回退页面和Toast提示
+      if (pwaState.isOffline || !navigator.onLine) {
+        console.log("[离线模式] 组件未缓存，显示离线回退页面");
 
-          // 显示Toast提示
-          setTimeout(() => {
-            showPageUnavailableToast(componentName);
-          }, 100);
+        // 显示Toast提示
+        setTimeout(() => {
+          showPageUnavailableToast(componentName);
+        }, 100);
 
-          return OfflineFallback;
-        }
+        return OfflineFallback;
+      }
 
-        // 在线状态下的加载失败，重新抛出错误
-        throw error;
-      });
+      // 在线状态下的加载失败，重新抛出错误
+      throw error;
+    });
 };
 
 const HomeView = createOfflineAwareImport(() => import("../views/MarkdownEditorView.vue"), "首页");
 const UploadView = createOfflineAwareImport(() => import("../views/UploadView.vue"), "文件上传页面");
-// AdminView 已被 AdminLayout 和嵌套路由替代
 const PasteView = createOfflineAwareImport(() => import("../views/PasteView.vue"), "文本分享页面");
 const FileView = createOfflineAwareImport(() => import("../views/FileView.vue"), "文件预览页面");
 const MountExplorerView = createOfflineAwareImport(() => import("../views/MountExplorerView.vue"), "挂载浏览器");
@@ -125,6 +124,15 @@ const routes = [
             },
           },
           {
+            path: "account",
+            name: "AdminAccountManagement",
+            component: createOfflineAwareImport(() => import("../views/admin/AccountManagementView.vue"), "账号管理"),
+            meta: {
+              title: "账号管理 - CloudPaste",
+              adminOnly: true, // 只有管理员可访问
+            },
+          },
+          {
             path: "settings",
             children: [
               {
@@ -136,15 +144,7 @@ const routes = [
                   adminOnly: true, // 只有管理员可访问
                 },
               },
-              {
-                path: "account",
-                name: "AdminAccountSettings",
-                component: createOfflineAwareImport(() => import("../views/admin/settings/AccountSettingsView.vue"), "账号设置"),
-                meta: {
-                  title: "账号设置 - CloudPaste",
-                  adminOnly: true, // 只有管理员可访问
-                },
-              },
+
               {
                 path: "webdav",
                 name: "AdminWebDAVSettings",
@@ -436,6 +436,9 @@ router.afterEach(async (to, from) => {
         title = `${t("pageTitle.adminModules.globalSettings")} - CloudPaste`;
         break;
       case "AdminAccountSettings":
+        title = `${t("pageTitle.adminModules.accountSettings")} - CloudPaste`;
+        break;
+      case "AdminAccountManagement":
         title = `${t("pageTitle.adminModules.accountSettings")} - CloudPaste`;
         break;
       case "AdminWebDAVSettings":

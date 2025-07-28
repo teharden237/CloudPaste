@@ -284,7 +284,7 @@ app.put("/api/upload-direct/:filename", authGateway.requireFile(), async (c) => 
     // 获取系统最大上传限制
     const repositoryFactory = new RepositoryFactory(db);
     const systemRepository = repositoryFactory.getSystemRepository();
-    const maxUploadSizeResult = await systemRepository.getSetting("max_upload_size");
+    const maxUploadSizeResult = await systemRepository.getSettingMetadata("max_upload_size");
 
     const maxUploadSizeMB = maxUploadSizeResult ? parseInt(maxUploadSizeResult.value) : DEFAULT_MAX_UPLOAD_SIZE_MB;
     const maxUploadSizeBytes = maxUploadSizeMB * 1024 * 1024;

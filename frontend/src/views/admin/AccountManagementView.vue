@@ -232,7 +232,6 @@ const handleChangePassword = async (event) => {
                     name="currentPassword"
                     id="currentPassword"
                     v-model="passwordForm.currentPassword"
-                    required
                     class="block w-full rounded border shadow-sm pl-3 pr-10 py-2 text-sm"
                     :class="
                       darkMode
@@ -240,6 +239,7 @@ const handleChangePassword = async (event) => {
                         : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500'
                     "
                     :placeholder="t('admin.account.adminInfo.currentPasswordPlaceholder')"
+                    required
                   />
                   <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                     <svg
@@ -259,7 +259,9 @@ const handleChangePassword = async (event) => {
                     </svg>
                   </div>
                 </div>
-                <p class="mt-2 text-xs" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">{{ t("admin.account.adminInfo.currentPasswordHint") }}</p>
+                <p class="mt-1 text-xs" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">
+                  {{ t("admin.account.adminInfo.currentPasswordHint") }}
+                </p>
               </div>
             </div>
 
@@ -303,7 +305,9 @@ const handleChangePassword = async (event) => {
                     </svg>
                   </div>
                 </div>
-                <p class="mt-2 text-xs" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">{{ t("admin.account.adminInfo.newPasswordHint") }}</p>
+                <p class="mt-1 text-xs" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">
+                  {{ t("admin.account.adminInfo.newPasswordHint") }}
+                </p>
               </div>
             </div>
 

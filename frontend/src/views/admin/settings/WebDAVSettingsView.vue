@@ -48,14 +48,17 @@ onMounted(async () => {
   webdavUrl.value = getWebdavUrl();
 
   try {
-    const response = await api.admin.getSystemSettings();
-    if (response && response.data) {
+    // 使用新的分组API获取WebDAV设置（分组ID = 3）
+    const response = await api.system.getSettingsByGroup(3, true);
+    if (response && response.success && response.data) {
       // 处理响应数据
       response.data.forEach((setting) => {
         if (setting.key === "webdav_upload_mode") {
           webdavSettings.value.webdav_upload_mode = setting.value;
         }
       });
+    } else {
+      throw new Error(response?.message || "获取设置失败");
     }
   } catch (error) {
     console.error("获取WebDAV设置失败:", error);
@@ -73,17 +76,26 @@ const handleUpdateWebdavSettings = async (event) => {
   };
 
   try {
-    await api.admin.updateSystemSettings({
-      webdav_upload_mode: webdavSettings.value.webdav_upload_mode,
-    });
+    // 使用新的分组更新API（WebDAV设置组，分组ID = 3）
+    const response = await api.system.updateGroupSettings(
+      3,
+      {
+        webdav_upload_mode: webdavSettings.value.webdav_upload_mode,
+      },
+      true
+    );
 
-    // 更新成功
-    webdavSettingsStatus.value.success = true;
+    if (response && response.success) {
+      // 更新成功
+      webdavSettingsStatus.value.success = true;
 
-    // 3秒后清除成功消息
-    setTimeout(() => {
-      webdavSettingsStatus.value.success = false;
-    }, 3000);
+      // 3秒后清除成功消息
+      setTimeout(() => {
+        webdavSettingsStatus.value.success = false;
+      }, 3000);
+    } else {
+      throw new Error(response?.message || "更新失败");
+    }
   } catch (error) {
     webdavSettingsStatus.value.error = error.message || t("admin.webdav.messages.updateFailed");
   } finally {

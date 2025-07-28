@@ -32,10 +32,10 @@ export default {
     },
   },
 
-  // 账号设置页面
+  // 账号管理页面
   account: {
-    title: "账号设置",
-    description: "修改管理员用户名和密码",
+    title: "账号管理",
+    description: "管理管理员账户信息，包括用户名和密码修改",
     adminInfo: {
       title: "管理员信息修改",
       description: "修改管理员用户名和密码",
@@ -49,6 +49,8 @@ export default {
       currentPasswordPlaceholder: "请输入当前密码",
       newPasswordPlaceholder: "请输入新密码",
       warningMessage: "修改后将自动退出登录，需要重新登录",
+      updateButton: "更新账号信息",
+      updating: "更新中...",
     },
     buttons: {
       updateAccount: "更新账号信息",
@@ -59,6 +61,7 @@ export default {
       updateFailed: "更新账号信息失败",
       passwordRequired: "请输入当前密码",
       newPasswordRequired: "请输入新密码",
+      newUsernameRequired: "请输入新用户名",
       newFieldRequired: "请至少填写新用户名或新密码中的一项",
       samePassword: "新密码不能与当前密码相同",
       logoutCountdown: "将在 {seconds} 秒后自动退出登录",

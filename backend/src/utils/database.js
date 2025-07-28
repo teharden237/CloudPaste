@@ -197,6 +197,11 @@ export async function initDatabase(db) {
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL,
         description TEXT,
+        type TEXT DEFAULT 'string',
+        group_id INTEGER DEFAULT 1,
+        options TEXT,
+        sort_order INTEGER DEFAULT 0,
+        flags INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
@@ -253,8 +258,8 @@ export async function initDatabase(db) {
     await db
       .prepare(
         `
-        INSERT INTO ${DbTables.SYSTEM_SETTINGS} (key, value, description)
-        VALUES ('max_upload_size', '100', '单次最大上传文件大小限制(MB)')
+        INSERT INTO ${DbTables.SYSTEM_SETTINGS} (key, value, description, type, group_id, options, sort_order, flags)
+        VALUES ('max_upload_size', '100', '单次最大上传文件大小限制(MB)', 'number', 1, NULL, 1, 0)
       `
       )
       .run();
@@ -272,13 +277,18 @@ export async function initDatabase(db) {
 
   // 如果不存在，添加默认值
   if (!webdavUploadMode) {
+    const options = JSON.stringify([
+      { value: "direct", label: "直接上传" },
+      { value: "multipart", label: "分片上传" },
+    ]);
     await db
       .prepare(
         `
-        INSERT INTO ${DbTables.SYSTEM_SETTINGS} (key, value, description)
-        VALUES ('webdav_upload_mode', 'direct', 'WebDAV上传模式（multipart, direct）')
+        INSERT INTO ${DbTables.SYSTEM_SETTINGS} (key, value, description, type, group_id, options, sort_order, flags)
+        VALUES ('webdav_upload_mode', 'direct', 'WebDAV客户端的上传模式选择。', 'select', 3, ?, 1, 0)
       `
       )
+      .bind(options)
       .run();
   }
 
@@ -297,8 +307,8 @@ export async function initDatabase(db) {
     await db
       .prepare(
         `
-        INSERT INTO ${DbTables.SYSTEM_SETTINGS} (key, value, description)
-        VALUES ('proxy_sign_all', 'true', '签名所有：开启后所有代理访问都需要签名')
+        INSERT INTO ${DbTables.SYSTEM_SETTINGS} (key, value, description, type, group_id, options, sort_order, flags)
+        VALUES ('proxy_sign_all', 'true', '是否对所有文件访问请求进行代理签名。', 'bool', 1, NULL, 2, 0)
       `
       )
       .run();
@@ -319,8 +329,8 @@ export async function initDatabase(db) {
     await db
       .prepare(
         `
-        INSERT INTO ${DbTables.SYSTEM_SETTINGS} (key, value, description)
-        VALUES ('proxy_sign_expires', '0', '全局签名过期时间（秒），0表示永不过期')
+        INSERT INTO ${DbTables.SYSTEM_SETTINGS} (key, value, description, type, group_id, options, sort_order, flags)
+        VALUES ('proxy_sign_expires', '0', '代理签名的过期时间（秒），0表示永不过期。', 'number', 1, NULL, 3, 0)
       `
       )
       .run();
@@ -926,6 +936,140 @@ async function migrateDatabase(db, currentVersion, targetVersion) {
           console.log("代理签名功能迁移失败，请手动检查storage_mounts表结构和系统设置");
         }
         break;
+
+      case 12:
+        // 版本12：系统设置架构重构 - 添加类型化和分组支持
+        try {
+          console.log("开始系统设置架构重构迁移...");
+
+          // 检查system_settings表的当前字段
+          const columnInfo = await db.prepare(`PRAGMA table_info(${DbTables.SYSTEM_SETTINGS})`).all();
+          const existingColumns = new Set(columnInfo.results.map((col) => col.name));
+
+          // 需要添加的新字段
+          const newFields = [
+            { name: "type", sql: "ALTER TABLE system_settings ADD COLUMN type TEXT DEFAULT 'text'" },
+            { name: "group_id", sql: "ALTER TABLE system_settings ADD COLUMN group_id INTEGER DEFAULT 1" },
+            { name: "options", sql: "ALTER TABLE system_settings ADD COLUMN options TEXT" },
+            { name: "sort_order", sql: "ALTER TABLE system_settings ADD COLUMN sort_order INTEGER DEFAULT 0" },
+            { name: "flags", sql: "ALTER TABLE system_settings ADD COLUMN flags INTEGER DEFAULT 0" },
+          ];
+
+          // 添加缺少的字段
+          for (const field of newFields) {
+            if (!existingColumns.has(field.name)) {
+              try {
+                await db.prepare(field.sql).run();
+                console.log(`成功添加字段: ${field.name}`);
+              } catch (alterError) {
+                console.error(`添加字段 ${field.name} 失败:`, alterError);
+                console.log(`将继续执行迁移过程，但请手动检查system_settings表结构`);
+              }
+            } else {
+              console.log(`字段 ${field.name} 已存在，跳过添加`);
+            }
+          }
+
+          console.log("系统设置表结构扩展完成");
+
+          // 更新现有设置项的元数据
+          console.log("开始更新现有设置项的分组和类型信息...");
+
+          const settingUpdates = [
+            // 全局设置组 (GLOBAL = 1)
+            {
+              key: "max_upload_size",
+              type: "number",
+              group_id: 1,
+              description: "单次上传文件的最大大小限制(MB)，建议根据服务器性能设置。",
+              options: null,
+              sort_order: 1,
+              flags: 0,
+            },
+            {
+              key: "proxy_sign_all",
+              type: "bool",
+              group_id: 1,
+              description: "开启后所有代理访问都需要签名验证，提升安全性。",
+              options: null,
+              sort_order: 2,
+              flags: 0,
+            },
+            {
+              key: "proxy_sign_expires",
+              type: "number",
+              group_id: 1,
+              description: "代理签名的过期时间（秒），0表示永不过期。",
+              options: null,
+              sort_order: 3,
+              flags: 0,
+            },
+            // WebDAV设置组 (WEBDAV = 3)
+            {
+              key: "webdav_upload_mode",
+              type: "select",
+              group_id: 3,
+              description: "WebDAV客户端的上传模式选择。",
+              options: JSON.stringify([
+                { value: "direct", label: "直接上传" },
+                { value: "multipart", label: "分片上传" },
+              ]),
+              sort_order: 1,
+              flags: 0,
+            },
+            // 系统内部设置 (SYSTEM = 99)
+            {
+              key: "db_initialized",
+              type: "bool",
+              group_id: 99,
+              description: "数据库初始化状态标记，系统内部使用。",
+              options: null,
+              sort_order: 1,
+              flags: 2,
+            },
+            {
+              key: "schema_version",
+              type: "number",
+              group_id: 99,
+              description: "数据库架构版本号，系统内部使用。",
+              options: null,
+              sort_order: 2,
+              flags: 2,
+            },
+          ];
+
+          for (const update of settingUpdates) {
+            try {
+              // 检查设置项是否存在
+              const existingSetting = await db.prepare(`SELECT key FROM ${DbTables.SYSTEM_SETTINGS} WHERE key = ?`).bind(update.key).first();
+
+              if (existingSetting) {
+                // 更新现有设置项的元数据
+                await db
+                  .prepare(
+                    `
+                    UPDATE ${DbTables.SYSTEM_SETTINGS}
+                    SET type = ?, group_id = ?, description = ?, options = ?, sort_order = ?, flags = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE key = ?
+                  `
+                  )
+                  .bind(update.type, update.group_id, update.description, update.options, update.sort_order, update.flags, update.key)
+                  .run();
+                console.log(`成功更新设置项元数据: ${update.key}`);
+              } else {
+                console.log(`设置项 ${update.key} 不存在，跳过更新`);
+              }
+            } catch (updateError) {
+              console.error(`更新设置项 ${update.key} 失败:`, updateError);
+            }
+          }
+
+          console.log("现有设置项元数据更新完成");
+        } catch (error) {
+          console.error(`版本12迁移失败:`, error);
+          console.log("系统设置架构重构迁移失败，请手动检查system_settings表结构");
+        }
+        break;
     }
 
     // 记录迁移历史
@@ -939,8 +1083,8 @@ async function migrateDatabase(db, currentVersion, targetVersion) {
       // 只有当迁移记录不存在时才插入
       await db
         .prepare(
-          `INSERT INTO ${DbTables.SYSTEM_SETTINGS} (key, value, description, updated_at)
-         VALUES (?, ?, ?, ?)`
+          `INSERT INTO ${DbTables.SYSTEM_SETTINGS} (key, value, description, type, group_id, sort_order, flags, updated_at)
+         VALUES (?, ?, ?, 'string', 99, 999, 1, ?)`
         )
         .bind(migrationKey, "completed", `Version ${version} migration completed`, now)
         .run();
@@ -950,6 +1094,53 @@ async function migrateDatabase(db, currentVersion, targetVersion) {
   }
 
   console.log("数据库迁移完成");
+
+  // 清理旧的迁移记录，只保留最近的2个版本
+  await cleanupOldMigrationRecords(db, targetVersion);
+}
+
+/**
+ * 清理旧的迁移记录，只保留最近的2个版本
+ * @param {D1Database} db - D1数据库实例
+ * @param {number} currentVersion - 当前版本
+ */
+async function cleanupOldMigrationRecords(db, currentVersion) {
+  try {
+    console.log("开始清理旧的迁移记录...");
+
+    // 保留最近的2个版本，删除更早的迁移记录
+    const keepVersions = 2;
+    const deleteBeforeVersion = currentVersion - keepVersions;
+
+    if (deleteBeforeVersion > 0) {
+      // 构建要删除的迁移记录键名列表
+      const keysToDelete = [];
+      for (let version = 1; version <= deleteBeforeVersion; version++) {
+        keysToDelete.push(`migration_${version}`);
+      }
+
+      if (keysToDelete.length > 0) {
+        // 批量删除旧的迁移记录
+        const placeholders = keysToDelete.map(() => "?").join(",");
+        const deleteQuery = `DELETE FROM ${DbTables.SYSTEM_SETTINGS} WHERE key IN (${placeholders})`;
+
+        const result = await db
+          .prepare(deleteQuery)
+          .bind(...keysToDelete)
+          .run();
+
+        console.log(`成功清理 ${result.changes || 0} 个旧的迁移记录 (版本 1-${deleteBeforeVersion})`);
+        console.log(`保留的迁移记录: migration_${deleteBeforeVersion + 1} 到 migration_${currentVersion}`);
+      } else {
+        console.log("没有需要清理的旧迁移记录");
+      }
+    } else {
+      console.log("当前版本较低，跳过迁移记录清理");
+    }
+  } catch (error) {
+    console.error("清理旧迁移记录时出错:", error);
+    // 不抛出错误，清理失败不应该影响系统正常运行
+  }
 }
 
 /**
@@ -1044,7 +1235,7 @@ export async function checkAndInitDatabase(db) {
     }
 
     // 如果要添加新表或修改现有表，请递增目标版本，修改后启动时自动更新数据库
-    const targetVersion = 11; // 目标schema版本,每次修改表结构时递增
+    const targetVersion = 12; // 目标schema版本,每次修改表结构时递增
 
     if (currentVersion < targetVersion) {
       console.log(`需要更新数据库结构，当前版本:${currentVersion}，目标版本:${targetVersion}`);
@@ -1073,8 +1264,8 @@ export async function checkAndInitDatabase(db) {
         } else {
           await db
             .prepare(
-              `INSERT INTO ${DbTables.SYSTEM_SETTINGS} (key, value, description, updated_at)
-               VALUES ('schema_version', ?, '数据库Schema版本号', ?)`
+              `INSERT INTO ${DbTables.SYSTEM_SETTINGS} (key, value, description, type, group_id, sort_order, flags, updated_at)
+               VALUES ('schema_version', ?, '数据库Schema版本号', 'string', 99, 1, 1, ?)`
             )
             .bind(targetVersion.toString(), now)
             .run();
@@ -1092,8 +1283,8 @@ export async function checkAndInitDatabase(db) {
         try {
           await db
             .prepare(
-              `INSERT INTO ${DbTables.SYSTEM_SETTINGS} (key, value, updated_at)
-               VALUES ('db_initialized', ?, ?)`
+              `INSERT INTO ${DbTables.SYSTEM_SETTINGS} (key, value, description, type, group_id, sort_order, flags, updated_at)
+               VALUES ('db_initialized', ?, '数据库初始化完成标记', 'bool', 99, 2, 1, ?)`
             )
             .bind("true", now)
             .run();

@@ -51,7 +51,7 @@ export default {
       keyManagement: "密钥管理",
       settings: "系统设置",
       globalSettings: "全局设置",
-      accountSettings: "账号设置",
+      accountSettings: "账号管理",
       webdavSettings: "WebDAV设置",
     },
   },

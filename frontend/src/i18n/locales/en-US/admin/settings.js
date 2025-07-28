@@ -32,10 +32,10 @@ export default {
     },
   },
 
-  // Account settings page
+  // Account management page
   account: {
-    title: "Account Settings",
-    description: "Modify administrator username and password",
+    title: "Account Management",
+    description: "Manage administrator account information, including username and password modification",
     adminInfo: {
       title: "Administrator Information Modification",
       description: "Modify administrator username and password",
@@ -49,6 +49,8 @@ export default {
       currentPasswordPlaceholder: "Please enter current password",
       newPasswordPlaceholder: "Please enter new password",
       warningMessage: "You will be automatically logged out after modification and need to log in again",
+      updateButton: "Update Account Information",
+      updating: "Updating...",
     },
     buttons: {
       updateAccount: "Update Account Information",
@@ -59,6 +61,7 @@ export default {
       updateFailed: "Failed to update account information",
       passwordRequired: "Please enter current password",
       newPasswordRequired: "Please enter new password",
+      newUsernameRequired: "Please enter new username",
       newFieldRequired: "Please fill in at least one of new username or new password",
       samePassword: "New password cannot be the same as current password",
       logoutCountdown: "Will automatically log out in {seconds} seconds",

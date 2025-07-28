@@ -152,6 +152,11 @@ CREATE TABLE system_settings (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL,
   description TEXT,
+  type TEXT DEFAULT 'string',              -- 设置值类型：string, number, bool, select
+  group_id INTEGER DEFAULT 1,              -- 分组ID：1=全局设置, 3=WebDAV设置
+  options TEXT,                            -- JSON格式的选项配置（用于select类型）
+  sort_order INTEGER DEFAULT 0,            -- 在分组内的排序顺序
+  flags INTEGER DEFAULT 0,                
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

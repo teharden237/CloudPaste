@@ -45,32 +45,28 @@ const proxySignStatus = ref({
 
 // 移除未使用的提示框状态
 
-// 获取设置数据
+// 获取设置数据（使用新的分组API）
 onMounted(async () => {
   try {
-    // 获取系统设置
-    const response = await api.admin.getSystemSettings();
-    if (response && response.data) {
+    // 使用新的分组API获取全局设置（分组ID = 1）
+    const response = await api.system.getSettingsByGroup(1, true);
+    if (response && response.success && response.data) {
       response.data.forEach((setting) => {
         if (setting.key === "max_upload_size") {
           const value = parseInt(setting.value);
           uploadSettings.value.max_upload_size = value;
           uploadSettings.value.max_upload_size_unit = "MB";
+        } else if (setting.key === "proxy_sign_all") {
+          proxySignSettings.value.signAll = setting.value === "true";
+        } else if (setting.key === "proxy_sign_expires") {
+          proxySignSettings.value.expires = parseInt(setting.value) || 0;
         }
       });
+    } else {
+      throw new Error(response?.message || "获取设置失败");
     }
   } catch (error) {
-    console.error("获取系统设置失败:", error);
-  }
-
-  try {
-    // 获取代理签名设置
-    const response = await api.system.getProxySignSettings();
-    if (response && response.success) {
-      proxySignSettings.value = response.data;
-    }
-  } catch (error) {
-    console.error("获取代理签名设置失败:", error);
+    console.error("获取全局设置失败:", error);
   }
 });
 
@@ -106,14 +102,23 @@ const handleUpdateUploadSettings = async (event) => {
   try {
     const convertedSize = convertToMB(uploadSettings.value.max_upload_size, uploadSettings.value.max_upload_size_unit);
 
-    await api.admin.updateSystemSettings({
-      max_upload_size: convertedSize,
-    });
+    // 使用新的分组更新API（全局设置组，分组ID = 1）
+    const response = await api.system.updateGroupSettings(
+      1,
+      {
+        max_upload_size: Math.round(convertedSize),
+      },
+      true
+    );
 
-    uploadStatus.value.success = true;
-    setTimeout(() => {
-      uploadStatus.value.success = false;
-    }, 3000);
+    if (response && response.success) {
+      uploadStatus.value.success = true;
+      setTimeout(() => {
+        uploadStatus.value.success = false;
+      }, 3000);
+    } else {
+      throw new Error(response?.message || "更新失败");
+    }
   } catch (error) {
     uploadStatus.value.error = error.message || t("admin.global.messages.updateFailed");
   } finally {
@@ -132,15 +137,24 @@ const handleUpdateProxySignSettings = async (event) => {
   };
 
   try {
-    await api.system.updateProxySignSettings({
-      signAll: proxySignSettings.value.signAll,
-      expires: proxySignSettings.value.expires,
-    });
+    // 使用新的分组更新API（代理签名设置也属于全局设置组，分组ID = 1）
+    const response = await api.system.updateGroupSettings(
+      1,
+      {
+        proxy_sign_all: proxySignSettings.value.signAll.toString(),
+        proxy_sign_expires: proxySignSettings.value.expires.toString(),
+      },
+      true
+    );
 
-    proxySignStatus.value.success = true;
-    setTimeout(() => {
-      proxySignStatus.value.success = false;
-    }, 3000);
+    if (response && response.success) {
+      proxySignStatus.value.success = true;
+      setTimeout(() => {
+        proxySignStatus.value.success = false;
+      }, 3000);
+    } else {
+      throw new Error(response?.message || "更新失败");
+    }
   } catch (error) {
     proxySignStatus.value.error = error.message || t("admin.global.messages.updateFailed");
   } finally {
