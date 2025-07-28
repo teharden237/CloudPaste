@@ -117,7 +117,7 @@ app.get("/api/public/files/:slug", async (c) => {
           if (fileStillExists) {
             console.log(`文件(${file.id})达到最大访问次数但未被删除，再次尝试删除...`);
             // 导入并使用 checkAndDeleteExpiredFile 函数
-            const { checkAndDeleteExpiredFile } = await import("../routes/fileViewRoutes.js");
+            const { checkAndDeleteExpiredFile } = await import("../services/fileViewService.js");
             await checkAndDeleteExpiredFile(db, result.file, encryptionSecret);
           }
         } catch (error) {
@@ -211,7 +211,7 @@ app.post("/api/public/files/:slug/verify", async (c) => {
         if (fileStillExists) {
           console.log(`文件(${file.id})达到最大访问次数但未被删除，再次尝试删除...`);
           // 导入并使用 checkAndDeleteExpiredFile 函数
-          const { checkAndDeleteExpiredFile } = await import("../routes/fileViewRoutes.js");
+          const { checkAndDeleteExpiredFile } = await import("../services/fileViewService.js");
           await checkAndDeleteExpiredFile(db, result.file, encryptionSecret);
         }
       } catch (error) {

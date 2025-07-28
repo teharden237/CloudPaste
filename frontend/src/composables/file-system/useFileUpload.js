@@ -5,8 +5,8 @@
 
 import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { api } from "../../api/index.js";
-import { useAuthStore } from "../../stores/authStore.js";
+import { api } from "@/api";
+import { useAuthStore } from "@/stores/authStore.js";
 import { useGlobalMessage } from "../core/useGlobalMessage.js";
 
 export function useFileUpload() {

@@ -143,15 +143,15 @@
 <script setup>
 import { ref, onMounted, reactive } from "vue";
 import QRCode from "qrcode";
-import { api } from "../../api";
-import { useDeleteSettingsStore } from "../../stores/deleteSettingsStore.js";
+import { api } from "@/api";
+import { useDeleteSettingsStore } from "@/stores/deleteSettingsStore.js";
 
 // 导入子组件
-import FileTable from "./files-management/FileTable.vue";
-import CommonPagination from "../common/CommonPagination.vue";
-import FileEditModal from "./files-management/FileEditModal.vue";
-import FilePreviewModal from "./files-management/FilePreviewModal.vue";
-import QRCodeModal from "./files-management/QRCodeModal.vue";
+import FileTable from "@/components/admin/FileTable.vue";
+import CommonPagination from "@/components/common/CommonPagination.vue";
+import FileEditModal from "@/components/file/FileEditModal.vue";
+import FilePreviewModal from "@/components/admin/FilePreviewModal.vue";
+import QRCodeModal from "@/components/admin/QRCodeModal.vue";
 
 /**
  * 组件接收的属性定义
@@ -257,7 +257,7 @@ const qrCodeDataURL = ref("");
 const qrCodeSlug = ref("");
 
 // 导入统一的时间处理工具
-import { formatCurrentTime } from "../../utils/timeUtils.js";
+import { formatCurrentTime } from "@/utils/timeUtils.js";
 
 /**
  * 更新最后刷新时间

@@ -1,9 +1,9 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from "vue";
-import { api } from "../../api";
-import MountForm from "./mount-management/MountForm.vue";
-import CommonPagination from "../common/CommonPagination.vue";
-import { useAuthStore } from "../../stores/authStore.js";
+import { api } from "@/api";
+import MountForm from "@/components/admin/MountForm.vue";
+import CommonPagination from "@/components/common/CommonPagination.vue";
+import { useAuthStore } from "@/stores/authStore.js";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
@@ -94,7 +94,7 @@ const s3ConfigsList = ref([]);
 const apiKeyNames = ref({});
 
 // 导入统一的时间处理工具
-import { formatCurrentTime, formatDateTimeWithSeconds } from "../../utils/timeUtils.js";
+import { formatCurrentTime, formatDateTimeWithSeconds } from "@/utils/timeUtils.js";
 
 /**
  * 更新最后刷新时间

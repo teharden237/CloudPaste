@@ -58,7 +58,7 @@ export async function getAuthHeaders() {
 
   try {
     // 使用认证Store获取认证信息
-    const { useAuthStore } = await import("../stores/authStore.js");
+    const { useAuthStore } = await import("@/stores/authStore.js");
     const authStore = useAuthStore();
 
     if (authStore.isAuthenticated) {

@@ -161,7 +161,7 @@
 <script setup>
 import { computed, ref, defineProps, onMounted, watch, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
-import { api } from "../../api/index.js";
+import { api } from "@/api";
 
 const { t } = useI18n();
 import {
@@ -178,8 +178,8 @@ import {
   isConfig as isConfigType,
   isOffice as isOfficeFileType,
   getFileIconClass as getFileIconClassUtil,
-} from "../../utils/mimeUtils.js";
-import { formatDateTime } from "../../utils/timeUtils.js";
+} from "@/utils/mimeUtils.js";
+import { formatDateTime } from "@/utils/timeUtils.js";
 import { copyToClipboard as clipboardCopy } from "@/utils/clipboard";
 
 //导入预览组件
@@ -564,7 +564,7 @@ const getOfficeDirectUrlForPreview = async () => {
     console.log("正在获取Office直接URL", { slug: props.fileInfo.slug, hasPassword: !!filePassword });
 
     // 使用统一的预览服务获取所有预览URL
-    const previewUrls = await api.preview.getOfficePreviewUrl(props.fileInfo.slug, {
+    const previewUrls = await api.fileView.getOfficePreviewUrl(props.fileInfo.slug, {
       password: filePassword,
       returnAll: true,
     });
@@ -622,7 +622,7 @@ const updateOfficePreviewUrls = async () => {
 
       if (directUrl) {
         // 使用统一的预览服务
-        const previewUrls = await api.preview.getOfficePreviewUrl({ directUrl }, { returnAll: true });
+        const previewUrls = await api.fileView.getOfficePreviewUrl({ directUrl }, { returnAll: true });
 
         microsoftOfficePreviewUrl.value = previewUrls.microsoft;
         googleDocsPreviewUrl.value = previewUrls.google;
@@ -660,7 +660,7 @@ const updateOfficePreviewUrls = async () => {
       }
 
       // 使用统一的预览服务
-      const previewUrls = await api.preview.getOfficePreviewUrl({ directUrl: url }, { returnAll: true });
+      const previewUrls = await api.fileView.getOfficePreviewUrl({ directUrl: url }, { returnAll: true });
 
       microsoftOfficePreviewUrl.value = previewUrls.microsoft;
       googleDocsPreviewUrl.value = previewUrls.google;

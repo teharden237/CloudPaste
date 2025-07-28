@@ -1,9 +1,9 @@
 <script setup>
 import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { api } from "../../../api";
-import { copyToClipboard } from "../../../utils/clipboard";
-import { Permission, PermissionChecker } from "../../../constants/permissions.js";
+import { api } from "@/api";
+import { copyToClipboard } from "@/utils/clipboard";
+import { Permission, PermissionChecker } from "@/constants/permissions.js";
 
 // 获取权限标签列表
 const getPermissionTags = (permissions) => {
@@ -186,7 +186,7 @@ const copyKeyToClipboard = async (key) => {
 };
 
 // 导入统一的时间处理工具
-import { formatDateTime } from "../../../utils/timeUtils.js";
+import { formatDateTime } from "@/utils/timeUtils.js";
 
 // 格式化日期显示
 const formatDate = (dateString) => {

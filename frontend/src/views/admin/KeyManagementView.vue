@@ -1,13 +1,13 @@
 <script setup>
 import { ref, onMounted, computed, onBeforeUnmount } from "vue";
-import { api } from "../../api";
+import { api } from "@/api";
 import { useI18n } from "vue-i18n";
-import CommonPagination from "../common/CommonPagination.vue";
-import { copyToClipboard } from "../../utils/clipboard";
+import CommonPagination from "@/components/common/CommonPagination.vue";
+import { copyToClipboard } from "@/utils/clipboard";
 
 // 导入子组件
-import KeyForm from "./keys-management/KeyForm.vue";
-import KeyTable from "./keys-management/KeyTable.vue";
+import KeyForm from "@/components/admin/KeyForm.vue";
+import KeyTable from "@/components/admin/KeyTable.vue";
 
 // 使用i18n
 const { t } = useI18n();
@@ -65,7 +65,7 @@ const keyTableRef = ref(null);
 const availableMounts = ref([]);
 
 // 导入统一的时间处理工具
-import { formatCurrentTime } from "../../utils/timeUtils.js";
+import { formatCurrentTime } from "@/utils/timeUtils.js";
 
 // 更新最后刷新时间
 const updateLastRefreshTime = () => {

@@ -408,11 +408,11 @@
 
 <script setup>
 import { ref, defineProps, defineEmits, watch, onUnmounted } from "vue";
-import { api } from "../../api";
+import { api } from "@/api";
 import { useI18n } from "vue-i18n";
-import { formatMimeType as formatMimeTypeUtil } from "../../utils/mimeUtils";
+import { formatMimeType as formatMimeTypeUtil } from "@/utils/mimeUtils";
 import { copyToClipboard } from "@/utils/clipboard";
-import { useDeleteSettingsStore } from "../../stores/deleteSettingsStore.js";
+import { useDeleteSettingsStore } from "@/stores/deleteSettingsStore.js";
 
 const { t } = useI18n();
 
@@ -441,8 +441,8 @@ const props = defineProps({
 const emit = defineEmits(["refresh"]);
 
 // 导入统一的工具函数
-import { getRemainingViews as getRemainingViewsUtil, formatFileSize } from "../../utils/fileUtils.js";
-import { getFileIconClass as getFileIconClassUtil } from "../../utils/mimeUtils.js";
+import { getRemainingViews as getRemainingViewsUtil, formatFileSize } from "@/utils/fileUtils.js";
+import { getFileIconClass as getFileIconClassUtil } from "@/utils/mimeUtils.js";
 import QRCode from "qrcode";
 
 /**
@@ -595,7 +595,7 @@ const getFileIconClassLocal = (mimetype, filename) => {
 };
 
 // 导入统一的时间处理工具
-import { formatDateTime } from "../../utils/timeUtils.js";
+import { formatDateTime } from "@/utils/timeUtils.js";
 
 // 格式化日期
 const formatDate = (dateString) => {

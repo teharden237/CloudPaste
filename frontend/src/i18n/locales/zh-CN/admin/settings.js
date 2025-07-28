@@ -1,19 +1,77 @@
 export default {
-  settings: {
-    title: "系统设置",
-    description: "管理系统配置和管理员账户信息",
+  // 全局设置页面
+  global: {
+    title: "全局设置",
+    description: "管理系统全局配置和代理签名设置",
     uploadSettings: {
       title: "上传限制设置",
-      description: "配置文件上传的大小限制和WebDAV上传模式",
+      description: "设置文件上传的大小限制",
       maxUploadSizeLabel: "最大上传文件大小",
       maxUploadSizePlaceholder: "输入数字",
-      maxUploadSizeHint: "设置单个文件的最大上传大小限制",
       unitKB: "KB",
       unitMB: "MB",
       unitGB: "GB",
-      footerHint: "修改后将立即生效，影响所有用户的文件上传",
+      validationError: "请输入有效的上传大小限制",
     },
-    webdavSettings: {
+    proxySignSettings: {
+      title: "代理签名设置",
+      description: "配置文件访问的代理签名功能",
+      signAllLabel: "签名所有请求",
+      signAllHint: "启用后，所有文件访问请求都将使用代理签名",
+      expiresLabel: "签名过期时间",
+      expiresHint: "设置代理签名的过期时间，0表示永不过期",
+      expiresUnit: "秒",
+    },
+    buttons: {
+      updateSettings: "更新设置",
+      updating: "更新中...",
+    },
+    messages: {
+      updateSuccess: "设置更新成功",
+      updateFailed: "更新设置失败",
+    },
+  },
+
+  // 账号设置页面
+  account: {
+    title: "账号设置",
+    description: "修改管理员用户名和密码",
+    adminInfo: {
+      title: "管理员信息修改",
+      description: "修改管理员用户名和密码",
+      newUsernameLabel: "新用户名",
+      newUsernameHint: "留空则不修改用户名",
+      currentPasswordLabel: "当前密码",
+      currentPasswordHint: "验证身份需要输入当前密码",
+      newPasswordLabel: "新密码",
+      newPasswordHint: "留空则不修改密码",
+      newUsernamePlaceholder: "请输入新用户名",
+      currentPasswordPlaceholder: "请输入当前密码",
+      newPasswordPlaceholder: "请输入新密码",
+      warningMessage: "修改后将自动退出登录，需要重新登录",
+    },
+    buttons: {
+      updateAccount: "更新账号信息",
+      updating: "更新中...",
+    },
+    messages: {
+      updateSuccess: "账号信息更新成功",
+      updateFailed: "更新账号信息失败",
+      passwordRequired: "请输入当前密码",
+      newPasswordRequired: "请输入新密码",
+      newFieldRequired: "请至少填写新用户名或新密码中的一项",
+      samePassword: "新密码不能与当前密码相同",
+      logoutCountdown: "将在 {seconds} 秒后自动退出登录",
+    },
+  },
+
+  // WebDAV设置页面
+  webdav: {
+    title: "WebDAV设置",
+    description: "配置WebDAV协议相关的功能和参数",
+    uploadSettings: {
+      title: "WebDAV上传设置",
+      description: "配置WebDAV客户端的上传处理方式",
       uploadModeLabel: "WebDAV上传模式",
       uploadModeHint: "选择WebDAV客户端的上传处理方式，worker部署的建议只使用直接上传模式",
       modes: {
@@ -21,47 +79,23 @@ export default {
         multipart: "分片上传",
       },
     },
-    adminSettings: {
-      title: "管理员信息修改",
-      description: "修改管理员用户名和密码",
-      newUsernameLabel: "新用户名",
-      newUsernamePlaceholder: "输入新的用户名",
-      newUsernameHint: "留空则不修改用户名",
-      currentPasswordLabel: "当前密码",
-      currentPasswordPlaceholder: "输入当前密码",
-      currentPasswordHint: "验证身份需要输入当前密码",
-      newPasswordLabel: "新密码",
-      newPasswordPlaceholder: "输入新密码",
-      newPasswordHint: "留空则不修改密码",
-      footerHint: "修改后将自动退出登录，需要重新登录",
+    protocolInfo: {
+      title: "WebDAV协议信息",
+      description: "WebDAV服务的基本信息和使用说明",
+      webdavUrlLabel: "WebDAV地址",
+      webdavUrlHint: "在WebDAV客户端中使用此地址连接",
+      authMethodLabel: "认证方式",
+      adminAuth: "管理员：用户名/密码",
+      apiKeyAuth: "API密钥: 密钥/密钥",
+      authHint: "推荐使用API密钥认证，更加安全",
     },
-    proxySignSettings: {
-      title: "代理签名设置",
-      description: "配置Web代理访问的签名策略和默认过期时间",
-      signAll: "签名所有",
-      signAllHint: {
-        enabled: "开启后：向所有文件的Web代理链接添加签名，无论存储是否启用签名",
-        disabled: "关闭后：只有启用签名的存储才会添加签名",
-      },
-      signExpires: "签名过期时间(秒)",
-      signExpiresHint: "挂载点的默认签名有效期：0表示永不过期",
-      updateProxySign: "更新代理签名设置",
-      updateSuccess: "代理签名设置更新成功",
-    },
-    status: {
-      success: "设置更新成功",
-      processing: "处理中...",
+    buttons: {
       updateSettings: "更新设置",
-      updateAccount: "更新账户",
-      adminUpdateSuccess: "管理员信息更新成功，即将自动退出登录",
-      errors: {
-        maxUploadSizeError: "最大上传大小必须大于0",
-        updateSettingsError: "更新系统设置失败",
-        currentPasswordRequired: "请输入当前密码",
-        newFieldRequired: "请至少填写新用户名或新密码中的一项",
-        passwordSame: "新密码不能与当前密码相同",
-        updateInfoError: "更新管理员信息失败",
-      },
+      updating: "更新中...",
+    },
+    messages: {
+      updateSuccess: "WebDAV设置更新成功",
+      updateFailed: "更新WebDAV设置失败",
     },
   },
 };

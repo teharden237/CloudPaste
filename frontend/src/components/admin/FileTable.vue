@@ -397,7 +397,7 @@
 
 <script setup>
 import { defineProps, defineEmits, ref, reactive, computed } from "vue";
-import { formatFileSize as formatFileSizeUtil, formatMimeType as formatMimeTypeUtil, getMimeTypeBackgroundClass as getMimeTypeBackgroundClassUtil } from "../../../utils/mimeUtils";
+import { formatFileSize as formatFileSizeUtil, formatMimeType as formatMimeTypeUtil, getMimeTypeBackgroundClass as getMimeTypeBackgroundClassUtil } from "@/utils/mimeUtils";
 import { copyToClipboard } from "@/utils/clipboard";
 
 const props = defineProps({
@@ -430,7 +430,7 @@ const copiedFiles = reactive({});
 const copiedPermanentFiles = reactive({});
 
 // 导入统一的工具函数
-import { getRemainingViews as getRemainingViewsUtil, getRemainingViewsClass as getRemainingViewsClassUtil, formatFileSize } from "../../../utils/fileUtils.js";
+import { getRemainingViews as getRemainingViewsUtil, getRemainingViewsClass as getRemainingViewsClassUtil, formatFileSize } from "@/utils/fileUtils.js";
 
 /**
  * 计算剩余可访问次数
@@ -471,7 +471,7 @@ const getMimeTypeClass = (mimeType, filename) => {
 };
 
 // 导入统一的时间处理工具
-import { formatDateTime, formatExpiry as formatExpiryUtil, parseUTCDate } from "../../../utils/timeUtils.js";
+import { formatDateTime, formatExpiry as formatExpiryUtil, parseUTCDate } from "@/utils/timeUtils.js";
 
 /**
  * 格式化日期
@@ -638,7 +638,7 @@ const copyPermanentLink = async (file) => {
     if (!file.urls || !file.urls.proxyDownloadUrl) {
       try {
         // 导入API函数
-        const { api } = await import("../../../api");
+        const { api } = await import("@/api");
 
         // 使用组件级别的isAdmin计算属性判断用户角色
         console.log(`当前用户类型: ${props.userType}, 是否管理员: ${isAdmin.value}`);

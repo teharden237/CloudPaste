@@ -5,9 +5,9 @@
 
 import { ref, computed, nextTick, watch, onMounted, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
-import { createAuthenticatedPreviewUrl } from "../../utils/fileUtils.js";
-import { formatDateTime } from "../../utils/timeUtils.js";
-import { formatFileSize as formatFileSizeUtil } from "../../utils/mimeUtils.js";
+import { createAuthenticatedPreviewUrl } from "@/utils/fileUtils.js";
+import { formatDateTime } from "@/utils/timeUtils.js";
+import { formatFileSize as formatFileSizeUtil } from "@/utils/mimeUtils.js";
 import hljs from "highlight.js";
 // 移除循环依赖：useFilePreviewExtensions 将在上层调用
 import { usePreviewTypes } from "./usePreviewTypes.js";
@@ -209,7 +209,7 @@ export function usePreviewRenderers(file, authInfo, emit, darkMode) {
 
       if (directUrl) {
         // 使用统一的预览服务
-        const { getOfficePreviewUrl } = await import("../../api/services/previewService");
+        const { getOfficePreviewUrl } = await import("../../api/services/fileViewService");
         const previewUrls = await getOfficePreviewUrl({ directUrl }, { returnAll: true });
 
         // 设置预览URL

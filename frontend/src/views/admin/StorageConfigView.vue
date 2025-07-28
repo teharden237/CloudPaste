@@ -1,8 +1,8 @@
 <script setup>
 import { ref, onMounted, computed, reactive } from "vue";
-import { api } from "../../api";
-import ConfigForm from "./s3config/ConfigForm.vue";
-import CommonPagination from "../common/CommonPagination.vue";
+import { api } from "@/api";
+import ConfigForm from "@/components/admin/ConfigForm.vue";
+import CommonPagination from "@/components/common/CommonPagination.vue";
 
 // 接收darkMode属性
 const props = defineProps({
@@ -250,7 +250,7 @@ const getProviderIcon = (providerType) => {
 };
 
 // 导入统一的时间处理工具
-import { formatDateTimeWithSeconds } from "../../utils/timeUtils.js";
+import { formatDateTimeWithSeconds } from "@/utils/timeUtils.js";
 
 // 格式化日期时间
 const formatDateTime = (dateString) => {

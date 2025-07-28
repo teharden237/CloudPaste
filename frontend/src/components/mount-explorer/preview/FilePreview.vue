@@ -506,7 +506,7 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { usePreviewRenderers, useFilePreviewExtensions } from "../../../composables/index.js";
-import { useAuthStore } from "../../../stores/authStore.js";
+import { useAuthStore } from "@/stores/authStore.js";
 import AudioPreview from "./AudioPreview.vue";
 import VideoPreview from "./VideoPreview.vue";
 

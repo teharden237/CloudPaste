@@ -5,7 +5,7 @@
 
 import { ref, onMounted, onUnmounted, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
-import { api } from "../../api/index.js";
+import { api } from "@/api";
 
 export function useFilePreviewExtensions(
   file,

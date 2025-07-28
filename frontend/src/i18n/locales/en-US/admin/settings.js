@@ -1,19 +1,77 @@
 export default {
-  settings: {
-    title: "System Settings",
-    description: "Manage system configuration and administrator account information",
+  // Global settings page
+  global: {
+    title: "Global Settings",
+    description: "Manage system global configuration and proxy signature settings",
     uploadSettings: {
       title: "Upload Limit Settings",
-      description: "Configure file upload size limits and WebDAV upload mode",
+      description: "Set file upload size limits",
       maxUploadSizeLabel: "Maximum Upload File Size",
       maxUploadSizePlaceholder: "Enter number",
-      maxUploadSizeHint: "Set the maximum upload size limit for individual files",
       unitKB: "KB",
       unitMB: "MB",
       unitGB: "GB",
-      footerHint: "Changes will take effect immediately and affect all users' file uploads",
+      validationError: "Please enter a valid upload size limit",
     },
-    webdavSettings: {
+    proxySignSettings: {
+      title: "Proxy Signature Settings",
+      description: "Configure proxy signature functionality for file access",
+      signAllLabel: "Sign All Requests",
+      signAllHint: "When enabled, all file access requests will use proxy signatures",
+      expiresLabel: "Signature Expiration Time",
+      expiresHint: "Set proxy signature expiration time, 0 means never expires",
+      expiresUnit: "seconds",
+    },
+    buttons: {
+      updateSettings: "Update Settings",
+      updating: "Updating...",
+    },
+    messages: {
+      updateSuccess: "Settings updated successfully",
+      updateFailed: "Failed to update settings",
+    },
+  },
+
+  // Account settings page
+  account: {
+    title: "Account Settings",
+    description: "Modify administrator username and password",
+    adminInfo: {
+      title: "Administrator Information Modification",
+      description: "Modify administrator username and password",
+      newUsernameLabel: "New Username",
+      newUsernameHint: "Leave blank to keep current username",
+      currentPasswordLabel: "Current Password",
+      currentPasswordHint: "Current password is required for identity verification",
+      newPasswordLabel: "New Password",
+      newPasswordHint: "Leave blank to keep current password",
+      newUsernamePlaceholder: "Please enter new username",
+      currentPasswordPlaceholder: "Please enter current password",
+      newPasswordPlaceholder: "Please enter new password",
+      warningMessage: "You will be automatically logged out after modification and need to log in again",
+    },
+    buttons: {
+      updateAccount: "Update Account Information",
+      updating: "Updating...",
+    },
+    messages: {
+      updateSuccess: "Account information updated successfully",
+      updateFailed: "Failed to update account information",
+      passwordRequired: "Please enter current password",
+      newPasswordRequired: "Please enter new password",
+      newFieldRequired: "Please fill in at least one of new username or new password",
+      samePassword: "New password cannot be the same as current password",
+      logoutCountdown: "Will automatically log out in {seconds} seconds",
+    },
+  },
+
+  // WebDAV settings page
+  webdav: {
+    title: "WebDAV Settings",
+    description: "Configure WebDAV protocol related functions and parameters",
+    uploadSettings: {
+      title: "WebDAV Upload Settings",
+      description: "Configure WebDAV client upload processing method",
       uploadModeLabel: "WebDAV Upload Mode",
       uploadModeHint: "Select the upload processing method for the WebDAV client. For worker deployment, it is recommended to use only the direct upload mode.",
       modes: {
@@ -21,47 +79,23 @@ export default {
         multipart: "Multipart Upload",
       },
     },
-    adminSettings: {
-      title: "Administrator Information Modification",
-      description: "Modify administrator username and password",
-      newUsernameLabel: "New Username",
-      newUsernamePlaceholder: "Enter new username",
-      newUsernameHint: "Leave blank to keep current username",
-      currentPasswordLabel: "Current Password",
-      currentPasswordPlaceholder: "Enter current password",
-      currentPasswordHint: "Current password required for identity verification",
-      newPasswordLabel: "New Password",
-      newPasswordPlaceholder: "Enter new password",
-      newPasswordHint: "Leave blank to keep current password",
-      footerHint: "You will be automatically logged out after modification and need to log in again",
+    protocolInfo: {
+      title: "WebDAV Protocol Information",
+      description: "Basic information and usage instructions for WebDAV service",
+      webdavUrlLabel: "WebDAV Address",
+      webdavUrlHint: "Use this address to connect in WebDAV client",
+      authMethodLabel: "Authentication Method",
+      adminAuth: "Administrator: Username/Password",
+      apiKeyAuth: "API Key: Key/Key",
+      authHint: "API key authentication is recommended for better security",
     },
-    proxySignSettings: {
-      title: "Proxy Signature Settings",
-      description: "Configure signature policy and default expiration time for web proxy access",
-      signAll: "Sign All",
-      signAllHint: {
-        enabled: "When enabled: Add signature to all file web proxy links, regardless of storage signature settings",
-        disabled: "When disabled: Only storages with signature enabled will add signatures",
-      },
-      signExpires: "Signature Expiration Time (seconds)",
-      signExpiresHint: "Default signature validity period for mount points: 0 means never expire",
-      updateProxySign: "Update Proxy Signature Settings",
-      updateSuccess: "Proxy signature settings updated successfully",
-    },
-    status: {
-      success: "Settings updated successfully",
-      processing: "Processing...",
+    buttons: {
       updateSettings: "Update Settings",
-      updateAccount: "Update Account",
-      adminUpdateSuccess: "Administrator information updated successfully, logging out automatically",
-      errors: {
-        maxUploadSizeError: "Maximum upload size must be greater than 0",
-        updateSettingsError: "Failed to update system settings",
-        currentPasswordRequired: "Please enter current password",
-        newFieldRequired: "Please fill in at least one of new username or new password",
-        passwordSame: "New password cannot be the same as current password",
-        updateInfoError: "Failed to update administrator information",
-      },
+      updating: "Updating...",
+    },
+    messages: {
+      updateSuccess: "WebDAV settings updated successfully",
+      updateFailed: "Failed to update WebDAV settings",
     },
   },
 };

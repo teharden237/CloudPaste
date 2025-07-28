@@ -90,7 +90,7 @@ async function addAuthToken(headers) {
   try {
     // 尝试从认证Store获取认证信息
     // 注意：这里需要动态导入，因为可能存在循环依赖
-    const { useAuthStore } = await import("../stores/authStore.js");
+    const { useAuthStore } = await import("@/stores/authStore.js");
     const authStore = useAuthStore();
 
     // 检查管理员认证
@@ -281,7 +281,7 @@ export async function fetchApi(endpoint, options = {}) {
 
         // 使用认证Store处理认证失败
         try {
-          const { useAuthStore } = await import("../stores/authStore.js");
+          const { useAuthStore } = await import("@/stores/authStore.js");
           const authStore = useAuthStore();
 
           // 管理员令牌过期
@@ -403,7 +403,7 @@ async function handleOfflineOperation(endpoint, options) {
     let authType = null;
 
     try {
-      const { useAuthStore } = await import("../stores/authStore.js");
+      const { useAuthStore } = await import("@/stores/authStore.js");
       const authStore = useAuthStore();
 
       if (authStore.authType === "admin" && authStore.adminToken) {

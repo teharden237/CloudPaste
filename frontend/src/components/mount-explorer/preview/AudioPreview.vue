@@ -35,8 +35,8 @@
 import { computed, ref, onMounted, onBeforeUnmount, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import AudioPlayer from "../../common/AudioPlayer.vue";
-import { api } from "../../../api";
-import { isAudio } from "../../../utils/mimeUtils";
+import { api } from "@/api";
+import { isAudio } from "@/utils/mimeUtils";
 
 const { t } = useI18n();
 

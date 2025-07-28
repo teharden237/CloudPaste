@@ -1,9 +1,8 @@
 <script setup>
-import { ref, reactive, computed } from "vue";
-import { api } from "../../api";
+import { ref, reactive } from "vue";
 import { useI18n } from "vue-i18n";
 import { ApiStatus } from "../../api/ApiStatus";
-import { useAuthStore } from "../../stores/authStore.js";
+import { useAuthStore } from "@/stores/authStore.js";
 
 const props = defineProps({
   darkMode: {

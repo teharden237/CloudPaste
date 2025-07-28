@@ -1,16 +1,16 @@
 <script setup>
 import { ref, onMounted, reactive, computed } from "vue";
-import { api } from "../../api";
+import { api } from "@/api";
 import QRCode from "qrcode";
 import { copyToClipboard } from "@/utils/clipboard";
-import { useAuthStore } from "../../stores/authStore.js";
+import { useAuthStore } from "@/stores/authStore.js";
 
 // 导入子组件
-import PasteTable from "./text-management/PasteTable.vue";
-import PasteCardList from "./text-management/PasteCardList.vue";
-import PastePreviewModal from "./text-management/PastePreviewModal.vue";
-import PasteEditModal from "./text-management/PasteEditModal.vue";
-import CommonPagination from "../common/CommonPagination.vue";
+import PasteTable from "@/components/admin/PasteTable.vue";
+import PasteCardList from "@/components/admin/PasteCardList.vue";
+import PastePreviewModal from "@/components/admin/PastePreviewModal.vue";
+import PasteEditModal from "@/components/admin/PasteEditModal.vue";
+import CommonPagination from "@/components/common/CommonPagination.vue";
 
 /**
  * 组件接收的属性定义
@@ -105,7 +105,7 @@ const copiedTexts = reactive({});
 const copiedRawTexts = reactive({});
 
 // 导入统一的时间处理工具
-import { formatCurrentTime } from "../../utils/timeUtils.js";
+import { formatCurrentTime } from "@/utils/timeUtils.js";
 
 /**
  * 更新最后刷新时间

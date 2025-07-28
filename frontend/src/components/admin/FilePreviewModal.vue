@@ -131,8 +131,8 @@
 
 <script setup>
 import { defineProps, defineEmits, computed } from "vue";
-import { api } from "../../../api/index.js";
-import { isOffice as isOfficeFileType } from "../../../utils/mimeUtils.js";
+import { api } from "@/api";
+import { isOffice as isOfficeFileType } from "@/utils/mimeUtils.js";
 
 const props = defineProps({
   file: {
@@ -208,7 +208,7 @@ const getOfficePreviewUrl = async () => {
     console.log("正在请求Office预览URL:", props.file.slug);
 
     // 使用统一的预览服务
-    return await api.preview.getOfficePreviewUrl(props.file.slug, {
+    return await api.fileView.getOfficePreviewUrl(props.file.slug, {
       password: filePassword,
       provider: "microsoft",
     });
@@ -220,10 +220,10 @@ const getOfficePreviewUrl = async () => {
 };
 
 // 导入统一的工具函数
-import { formatFileSize, getRemainingViews as getRemainingViewsUtil } from "../../../utils/fileUtils.js";
+import { formatFileSize, getRemainingViews as getRemainingViewsUtil } from "@/utils/fileUtils.js";
 
 // 导入统一的时间处理工具
-import { formatDateTimeWithSeconds } from "../../../utils/timeUtils.js";
+import { formatDateTimeWithSeconds } from "@/utils/timeUtils.js";
 
 /**
  * 格式化日期时间
@@ -256,15 +256,8 @@ const getPermanentDownloadUrl = computed(() => {
     return url;
   }
 
-  // 如果没有urls对象，则回退到前端构建URL
-  let url = `${baseUrl.value}/api/file-download/${props.file.slug}`;
-
-  // 如果有密码保护，则添加密码参数
-  if (props.file.has_password && filePassword) {
-    url += `?password=${encodeURIComponent(filePassword)}`;
-  }
-
-  return url;
+  // 使用统一的文件分享API构建下载URL
+  return api.fileView.buildDownloadUrl(props.file.slug, props.file.has_password ? filePassword : null);
 });
 
 /**
@@ -289,15 +282,8 @@ const getPermanentViewUrl = computed(() => {
     return url;
   }
 
-  // 如果没有urls对象，则回退到前端构建URL
-  let url = `${baseUrl.value}/api/file-view/${props.file.slug}`;
-
-  // 如果有密码保护，则添加密码参数
-  if (props.file.has_password && filePassword) {
-    url += `?password=${encodeURIComponent(filePassword)}`;
-  }
-
-  return url;
+  // 使用统一的文件分享API构建预览URL
+  return api.fileView.buildPreviewUrl(props.file.slug, props.file.has_password ? filePassword : null);
 });
 
 /**

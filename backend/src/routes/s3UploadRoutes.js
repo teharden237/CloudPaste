@@ -70,7 +70,7 @@ app.post("/api/s3/presign", authGateway.requireFile(), async (c) => {
           }
 
           // 删除旧文件的数据库记录
-          await fileRepository.deleteById(existingFile.id);
+          await fileRepository.deleteFile(existingFile.id);
 
           // 删除关联的密码记录（如果有）
           await fileRepository.deleteFilePasswordRecord(existingFile.id);
@@ -391,7 +391,7 @@ app.put("/api/upload-direct/:filename", authGateway.requireFile(), async (c) => 
           }
 
           // 删除旧文件的数据库记录
-          await fileRepository.deleteById(existingFile.id);
+          await fileRepository.deleteFile(existingFile.id);
 
           // 删除关联的密码记录（如果有）
           await fileRepository.deleteFilePasswordRecord(existingFile.id);

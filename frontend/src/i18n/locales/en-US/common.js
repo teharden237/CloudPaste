@@ -47,6 +47,9 @@ export default {
       mountManagement: "Mount Management",
       keyManagement: "Key Management",
       settings: "System Settings",
+      globalSettings: "Global Settings",
+      accountSettings: "Account Settings",
+      webdavSettings: "WebDAV Settings",
     },
   },
   nav: {

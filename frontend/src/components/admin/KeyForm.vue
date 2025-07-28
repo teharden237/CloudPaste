@@ -2,8 +2,8 @@
 import { ref, computed, watch, shallowRef } from "vue";
 import { h } from "vue"; //递归组件
 import { useI18n } from "vue-i18n";
-import { api } from "../../../api";
-import { Permission, PermissionChecker } from "../../../constants/permissions.js";
+import { api } from "@/api";
+import { Permission, PermissionChecker } from "@/constants/permissions.js";
 
 // 目录缓存对象，用于存储已加载的目录内容
 const directoryCache = shallowRef(new Map());

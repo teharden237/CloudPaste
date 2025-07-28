@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
-import { api } from "../../../api";
+import { api } from "@/api";
 import { useI18n } from "vue-i18n";
 
 // 初始化 i18n

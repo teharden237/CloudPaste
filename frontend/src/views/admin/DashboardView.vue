@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, watch, onBeforeUnmount } from "vue";
-import { api } from "../../api";
+import { api } from "@/api";
 import { useI18n } from "vue-i18n";
 // 引入Chart.js相关组件
 import { Bar, Line } from "vue-chartjs";
@@ -13,6 +13,10 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarEleme
 const props = defineProps({
   darkMode: {
     type: Boolean,
+    required: true,
+  },
+  permissions: {
+    type: Object,
     required: true,
   },
 });
@@ -74,7 +78,7 @@ const error = ref(null);
 const chartType = ref("bar"); // 'bar' 或 'line'
 
 // 导入统一的时间处理工具
-import { formatCurrentTime } from "../../utils/timeUtils.js";
+import { formatCurrentTime } from "@/utils/timeUtils.js";
 
 // 图表日期标签
 const dateLabels = computed(() => {
@@ -427,7 +431,22 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="flex flex-col h-full w-full">
+  <!-- 当API密钥用户尝试访问Dashboard时显示权限不足提示 -->
+  <div v-if="!permissions.isAdmin" class="p-6 flex-1 flex flex-col items-center justify-center text-center">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4" :class="darkMode ? 'text-gray-600' : 'text-gray-400'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+      />
+    </svg>
+    <h3 class="text-xl font-semibold mb-2" :class="darkMode ? 'text-white' : 'text-gray-800'">权限不足</h3>
+    <p class="text-base mb-4" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">您没有访问此页面的权限</p>
+  </div>
+
+  <!-- 管理员仪表板内容 -->
+  <div v-else class="flex flex-col h-full w-full">
     <!-- 标题和刷新按钮 -->
     <div class="flex justify-between items-center mb-4 md:mb-6">
       <h2 class="text-xl font-bold" :class="darkMode ? 'text-white' : 'text-gray-800'">
