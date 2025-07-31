@@ -255,6 +255,16 @@ export class FileShareService {
     // 处理最大查看次数
     const maxViews = typeof max_views === "number" && max_views > 0 ? max_views : null;
 
+    // 获取全局默认代理设置
+    let defaultUseProxy = false; // 硬编码默认值作为后备
+    try {
+      const systemRepository = this.repositoryFactory.getSystemRepository();
+      const defaultProxySetting = await systemRepository.getSettingMetadata("default_use_proxy");
+      defaultUseProxy = defaultProxySetting?.value === "true";
+    } catch (error) {
+      console.warn("获取全局默认代理设置失败，使用硬编码默认值:", error);
+    }
+
     // 创建文件记录
     const fileRepository = this.repositoryFactory.getFileRepository();
     const fileData = {
@@ -272,7 +282,7 @@ export class FileShareService {
       password: passwordHash,
       expires_at: expiresAt,
       max_views: maxViews > 0 ? maxViews : null,
-      use_proxy: use_proxy !== undefined ? use_proxy : true,
+      use_proxy: use_proxy !== undefined ? use_proxy : defaultUseProxy,
       created_by: userType === "admin" ? userIdOrInfo : `apikey:${userIdOrInfo}`,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

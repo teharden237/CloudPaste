@@ -4,14 +4,16 @@ export default {
     title: "全局设置",
     description: "管理系统全局配置和代理签名设置",
     uploadSettings: {
-      title: "上传限制设置",
-      description: "设置文件上传的大小限制",
+      title: "文件上传页限制设置",
+      description: "设置文件上传的大小限制和默认代理",
       maxUploadSizeLabel: "最大上传文件大小",
       maxUploadSizePlaceholder: "输入数字",
       unitKB: "KB",
       unitMB: "MB",
       unitGB: "GB",
       validationError: "请输入有效的上传大小限制",
+      defaultUseProxyLabel: "新文件默认使用代理",
+      defaultUseProxyHint: "启用后新文件默认使用Worker代理，禁用后默认使用直链",
     },
     proxySignSettings: {
       title: "代理签名设置",

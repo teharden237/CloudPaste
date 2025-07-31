@@ -87,6 +87,17 @@ export const DEFAULT_SETTINGS = {
     default_value: "0",
   },
 
+  default_use_proxy: {
+    key: "default_use_proxy",
+    type: SETTING_TYPES.BOOL,
+    group_id: SETTING_GROUPS.GLOBAL,
+    help: "新文件的默认代理设置。启用后新文件默认使用Worker代理，禁用后默认使用直链。",
+    options: null,
+    sort_order: 4,
+    flag: SETTING_FLAGS.PUBLIC,
+    default_value: "false",
+  },
+
   // 预览设置组
   preview_text_types: {
     key: "preview_text_types",

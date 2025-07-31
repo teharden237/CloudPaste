@@ -155,7 +155,7 @@ export async function initDatabase(db) {
         expires_at DATETIME,
         max_views INTEGER,
         views INTEGER DEFAULT 0,
-        use_proxy BOOLEAN DEFAULT 1,
+        use_proxy BOOLEAN DEFAULT 0,
 
         -- 元数据
         created_by TEXT,
@@ -1164,6 +1164,109 @@ async function migrateDatabase(db, currentVersion, targetVersion) {
           console.log("预览设置迁移失败，请手动检查system_settings表");
         }
         break;
+
+      case 14:
+        // 版本14：修改files表的use_proxy默认值为0（不使用代理）
+        try {
+          console.log("开始修改files表的use_proxy默认值...");
+
+          // 检查files表是否存在
+          const filesTableExists = await db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='${DbTables.FILES}'`).first();
+
+          if (filesTableExists) {
+            // SQLite不支持直接修改列的默认值，需要重建表
+            console.log("创建新的files表结构（use_proxy默认值为0）...");
+
+            // 1. 创建新表结构
+            await db
+              .prepare(
+                `
+              CREATE TABLE ${DbTables.FILES}_new (
+                id TEXT PRIMARY KEY,
+                slug TEXT UNIQUE NOT NULL,
+                filename TEXT NOT NULL,
+
+                -- 存储引用（支持多存储类型）
+                storage_config_id TEXT NOT NULL,
+                storage_type TEXT NOT NULL,
+                storage_path TEXT NOT NULL,
+                file_path TEXT,
+
+                -- 文件元数据
+                mimetype TEXT NOT NULL,
+                size INTEGER NOT NULL,
+                etag TEXT,
+
+                -- 分享控制（保持现有功能）
+                remark TEXT,
+                password TEXT,
+                expires_at DATETIME,
+                max_views INTEGER,
+                views INTEGER DEFAULT 0,
+                use_proxy BOOLEAN DEFAULT 0,  -- 修改默认值为0
+
+                -- 元数据
+                created_by TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+              )
+            `
+              )
+              .run();
+
+            // 2. 复制数据到新表
+            console.log("复制数据到新表...");
+            await db
+              .prepare(
+                `
+              INSERT INTO ${DbTables.FILES}_new
+              SELECT * FROM ${DbTables.FILES}
+            `
+              )
+              .run();
+
+            // 3. 删除旧表
+            console.log("删除旧表...");
+            await db.prepare(`DROP TABLE ${DbTables.FILES}`).run();
+
+            // 4. 重命名新表
+            console.log("重命名新表...");
+            await db.prepare(`ALTER TABLE ${DbTables.FILES}_new RENAME TO ${DbTables.FILES}`).run();
+
+            // 5. 重建索引
+            console.log("重建索引...");
+            await db.prepare(`CREATE INDEX IF NOT EXISTS idx_files_slug ON ${DbTables.FILES}(slug)`).run();
+            await db.prepare(`CREATE INDEX IF NOT EXISTS idx_files_created_at ON ${DbTables.FILES}(created_at DESC)`).run();
+            await db.prepare(`CREATE INDEX IF NOT EXISTS idx_files_created_by ON ${DbTables.FILES}(created_by)`).run();
+            await db.prepare(`CREATE INDEX IF NOT EXISTS idx_files_storage_config ON ${DbTables.FILES}(storage_config_id)`).run();
+
+            console.log("files表use_proxy默认值修改完成");
+          } else {
+            console.log("files表不存在，跳过迁移");
+          }
+
+          // 添加全局默认代理设置
+          console.log("添加全局默认代理设置...");
+          const defaultUseProxySetting = await db.prepare(`SELECT key FROM ${DbTables.SYSTEM_SETTINGS} WHERE key = 'default_use_proxy'`).first();
+
+          if (!defaultUseProxySetting) {
+            await db
+              .prepare(
+                `
+              INSERT INTO ${DbTables.SYSTEM_SETTINGS} (key, value, description, type, group_id, options, sort_order, flags)
+              VALUES ('default_use_proxy', 'false', '文件管理的默认代理设置。启用后新上传文件默认使用Worker代理，禁用后默认使用直链。', 'bool', 1, NULL, 4, 0)
+            `
+              )
+              .run();
+            console.log("全局默认代理设置添加完成");
+          } else {
+            console.log("全局默认代理设置已存在，跳过添加");
+          }
+        } catch (error) {
+          console.error(`版本14迁移失败:`, error);
+          console.log("use_proxy默认值修改失败，请手动检查files表结构");
+        }
+        break;
     }
 
     // 记录迁移历史
@@ -1341,7 +1444,7 @@ export async function checkAndInitDatabase(db) {
     }
 
     // 如果要添加新表或修改现有表，请递增目标版本，修改后启动时自动更新数据库
-    const targetVersion = 13; // 目标schema版本,每次修改表结构时递增
+    const targetVersion = 14; // 目标schema版本,每次修改表结构时递增
 
     if (currentVersion < targetVersion) {
       console.log(`需要更新数据库结构，当前版本:${currentVersion}，目标版本:${targetVersion}`);
