@@ -203,8 +203,8 @@ const loadFiles = async () => {
 
   loadingFiles.value = true;
   try {
-    // 使用统一的API
-    const response = await api.file.getFiles();
+    // 使用统一的API，只请求5个文件（显示3个，留2个余量）
+    const response = await api.file.getFiles(5, 0);
 
     if (response.success && response.data) {
       // 确保按时间倒序排序，最新的在前面

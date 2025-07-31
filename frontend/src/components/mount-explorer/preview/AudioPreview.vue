@@ -36,7 +36,7 @@ import { computed, ref, onMounted, onBeforeUnmount, watch, nextTick } from "vue"
 import { useI18n } from "vue-i18n";
 import AudioPlayer from "../../common/AudioPlayer.vue";
 import { api } from "@/api";
-import { isAudio } from "@/utils/mimeUtils";
+import { FileType } from "@/utils/fileTypes.js";
 
 const { t } = useI18n();
 
@@ -216,7 +216,8 @@ const loadAudioPlaylist = async () => {
     // 过滤出音频文件
     const audioFileList = directoryItems.filter((item) => {
       if (item.isDirectory) return false;
-      const isAudioFile = isAudio(item.contentType || "", item.name || "");
+      // 使用后端返回的type字段判断是否为音频文件
+      const isAudioFile = item.type === FileType.AUDIO;
       return isAudioFile;
     });
 

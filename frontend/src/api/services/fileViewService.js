@@ -118,11 +118,10 @@ export async function getOfficePreviewUrl(input, options = {}) {
     let directUrl;
     if (typeof input === "string") {
       // input是slug，需要调用API获取directUrl
-      const response = await getOfficePreviewUrlBySlug(input, password);
-      if (!response.url) {
-        throw new Error("响应中缺少URL字段");
+      directUrl = await getOfficePreviewUrlBySlug(input, password);
+      if (!directUrl) {
+        throw new Error("无法获取Office预览URL");
       }
-      directUrl = response.url;
     } else if (input && typeof input === "object" && input.directUrl) {
       // input是包含directUrl的对象
       directUrl = input.directUrl;

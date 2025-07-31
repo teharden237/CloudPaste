@@ -10,7 +10,7 @@ let isDbInitialized = false;
 export default {
   async fetch(request, env, ctx) {
     try {
-      // D1数据库连接和加密密钥添加到环境中
+      // 创建一个新的环境对象，将D1数据库连接和加密密钥添加到环境中
       const bindings = {
         ...env,
         DB: env.DB, // D1数据库
@@ -20,7 +20,7 @@ export default {
       // 只在第一次请求时检查并初始化数据库
       if (!isDbInitialized) {
         console.log("首次请求，检查数据库状态...");
-        isDbInitialized = true; // 标记，避免并发请求重复初始化
+        isDbInitialized = true; // 先设置标记，避免并发请求重复初始化
         try {
           await checkAndInitDatabase(env.DB);
         } catch (error) {

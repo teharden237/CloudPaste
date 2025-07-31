@@ -133,6 +133,9 @@ Before starting deployment, please ensure you have prepared the following:
    - `S3_BUCKET_NAME`
    - `S3_ENDPOINT`
 
+**The following tutorial may be outdated. For specific details, refer to: [Cloudpaste Online Deployment Documentation](https://doc.cloudpaste.qzz.io)**
+
+
 <details>
 <summary><b>👉 View Complete Deployment Guide</b></summary>
 

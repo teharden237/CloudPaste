@@ -101,4 +101,46 @@ export default {
       updateFailed: "更新WebDAV设置失败",
     },
   },
+
+  // 预览设置页面
+  preview: {
+    title: "预览设置",
+    description: "配置不同文件类型的预览支持",
+    loadError: "加载预览设置失败",
+
+    textTypes: "文本文件类型",
+    textTypesLabel: "支持的文本文件扩展名",
+    textTypesPlaceholder:
+      "txt,htm,html,xml,java,properties,sql,js,md,json,conf,ini,vue,php,py,bat,yml,go,sh,c,cpp,h,hpp,tsx,vtt,srt,ass,rs,lrc,dockerfile,makefile,gitignore,license,readme",
+    textTypesHelp: "用逗号分隔的文本文件扩展名，这些文件将使用文本预览器显示",
+
+    imageTypes: "图片文件类型",
+    imageTypesLabel: "支持的图片文件扩展名",
+    imageTypesPlaceholder: "jpg,tiff,jpeg,png,gif,bmp,svg,ico,swf,webp",
+    imageTypesHelp: "用逗号分隔的图片文件扩展名，这些文件将使用图片预览器显示",
+
+    videoTypes: "视频文件类型",
+    videoTypesLabel: "支持的视频文件扩展名",
+    videoTypesPlaceholder: "mp4,htm,html,mkv,avi,mov,rmvb,webm,flv,m3u8",
+    videoTypesHelp: "用逗号分隔的视频文件扩展名，这些文件将使用视频播放器预览(能否播放要取决于浏览器是否支持，一般只支格式为 h.264 (mp4) 的编码格式)",
+
+    audioTypes: "音频文件类型",
+    audioTypesLabel: "支持的音频文件扩展名",
+    audioTypesPlaceholder: "mp3,flac,ogg,m4a,wav,opus,wma",
+    audioTypesHelp: "用逗号分隔的音频文件扩展名，这些文件将使用音频播放器预览",
+
+    officeTypes: "Office文件类型",
+    officeTypesLabel: "支持的Office文件扩展名（需要在线转换）",
+    officeTypesPlaceholder: "doc,docx,xls,xlsx,ppt,pptx,rtf",
+    officeTypesHelp: "用逗号分隔的Office文件扩展名，这些文件将通过第三方服务进行在线转换预览",
+
+    documentTypes: "文档文件类型",
+    documentTypesLabel: "支持的文档文件扩展名（可直接预览）",
+    documentTypesPlaceholder: "pdf",
+    documentTypesHelp: "用逗号分隔的文档文件扩展名，这些文件可以直接在浏览器中预览",
+
+    resetDefaults: "重置为默认",
+    resetConfirm: "确定要重置为默认设置吗？这将覆盖当前的所有配置。",
+    saveSuccess: "预览设置保存成功",
+  },
 };

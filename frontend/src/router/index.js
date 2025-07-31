@@ -154,6 +154,15 @@ const routes = [
                   adminOnly: true, // 只有管理员可访问
                 },
               },
+              {
+                path: "preview",
+                name: "AdminPreviewSettings",
+                component: createOfflineAwareImport(() => import("../views/admin/settings/PreviewSettingsView.vue"), "预览设置"),
+                meta: {
+                  title: "预览设置 - CloudPaste",
+                  adminOnly: true, // 只有管理员可访问
+                },
+              },
             ],
           },
         ],

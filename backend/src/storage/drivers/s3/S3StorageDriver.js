@@ -103,6 +103,7 @@ export class S3StorageDriver extends BaseDriver {
       mount,
       subPath, // 使用正确的子路径用于缓存键生成
       path,
+      db,
     });
   }
 

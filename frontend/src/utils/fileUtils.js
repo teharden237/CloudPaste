@@ -4,7 +4,7 @@
  *
  */
 
-import { formatFileSize as formatFileSizeUtil } from "./mimeUtils.js";
+import { formatFileSize as formatFileSizeUtil } from "./fileTypes.js";
 
 /**
  * 使用fetch API下载文件并保存

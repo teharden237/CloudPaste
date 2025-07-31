@@ -130,7 +130,7 @@ app.get("/api/public/files/:slug", async (c) => {
       const urlsObj = await generateFileDownloadUrl(db, result.file, encryptionSecret, c.req.raw);
 
       // 构建公开信息
-      const publicInfo = getPublicFileInfo(result.file, requiresPassword, urlsObj);
+      const publicInfo = await getPublicFileInfo(result.file, requiresPassword, urlsObj);
 
       return c.json({
         code: ApiStatus.SUCCESS,
@@ -140,7 +140,7 @@ app.get("/api/public/files/:slug", async (c) => {
       });
     } else {
       // 文件需要密码验证，只返回基本信息
-      const publicInfo = getPublicFileInfo(file, true);
+      const publicInfo = await getPublicFileInfo(file, true);
 
       return c.json({
         code: ApiStatus.SUCCESS,
@@ -238,8 +238,8 @@ app.post("/api/public/files/:slug/verify", async (c) => {
       }
     }
 
-    // 使用getPublicFileInfo函数构建完整的响应，包括代理链接
-    const publicInfo = getPublicFileInfo(fileWithPassword, false, urlsObj);
+    // 使用getPublicFileInfo函数构建完整的响应，包括代理链接和type字段
+    const publicInfo = await getPublicFileInfo(fileWithPassword, false, urlsObj);
 
     return c.json({
       code: ApiStatus.SUCCESS,

@@ -127,12 +127,12 @@
 <script setup>
 import { ref, defineProps, defineEmits, computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { isOffice as isOfficeFileType } from "@/utils/mimeUtils.js";
 import { api } from "@/api";
 import { ApiStatus } from "../../api/ApiStatus";
 import { copyToClipboard } from "@/utils/clipboard";
 import ErrorToast from "../common/ErrorToast.vue";
 import { useAuthStore } from "@/stores/authStore.js";
+import { FileType } from "@/utils/fileTypes.js";
 
 const { t } = useI18n();
 
@@ -201,11 +201,9 @@ const isCreator = computed(() => {
   return authStore.isFileCreator(props.fileInfo);
 });
 
-// 认证信息已由认证Store管理，不需要额外的验证逻辑
-
-// 辅助函数：获取文件密码（按优先级顺序）
+// 辅助函数：获取文件密码
 const getFilePassword = () => {
-  // 1. 优先使用文件信息中存储的已验证密码（最可靠）
+  // 1. 优先使用文件信息中存储的已验证密码
   if (props.fileInfo.currentPassword) {
     console.log("使用已验证的密码");
     return props.fileInfo.currentPassword;
@@ -222,7 +220,7 @@ const getFilePassword = () => {
     console.error("从会话存储获取密码出错:", err);
   }
 
-  // 3. 最后尝试从URL获取密码参数（可能不安全，但为了兼容性保留）
+  // 3. 最后尝试从URL获取密码参数
   try {
     const currentUrl = new URL(window.location.href);
     const passwordParam = currentUrl.searchParams.get("password");
@@ -245,11 +243,12 @@ const previewFile = async () => {
   if (!props.fileUrls.previewUrl) return;
 
   try {
-    // 首先判断是否是Office文件
-    const isOffice = isOfficeFileType(props.fileInfo.mimetype, props.fileInfo.filename);
+    // 判断是否是需要Office在线预览的文件
+    const isOffice = props.fileInfo.type === FileType.OFFICE;
+    const needsOfficePreview = isOffice;
 
-    // 如果是Office文件，需要特殊处理
-    if (isOffice) {
+    // 如果是需要Office在线预览的文件，需要特殊处理
+    if (needsOfficePreview) {
       let officePreviewUrl;
 
       // 使用统一的文件分享API处理Office预览

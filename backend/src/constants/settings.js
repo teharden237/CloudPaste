@@ -9,6 +9,7 @@
  */
 export const SETTING_GROUPS = {
   GLOBAL: 1, // 全局设置
+  PREVIEW: 2, // 预览设置
   WEBDAV: 3, // WebDAV设置
   SYSTEM: 99, // 系统内部设置（不在前端显示）
 };
@@ -42,6 +43,7 @@ export const SETTING_FLAGS = {
  */
 export const SETTING_GROUP_NAMES = {
   [SETTING_GROUPS.GLOBAL]: "全局设置",
+  [SETTING_GROUPS.PREVIEW]: "预览设置",
   [SETTING_GROUPS.WEBDAV]: "WebDAV设置",
   [SETTING_GROUPS.SYSTEM]: "系统设置",
 };
@@ -83,6 +85,74 @@ export const DEFAULT_SETTINGS = {
     sort_order: 3,
     flag: SETTING_FLAGS.PUBLIC,
     default_value: "0",
+  },
+
+  // 预览设置组
+  preview_text_types: {
+    key: "preview_text_types",
+    type: SETTING_TYPES.TEXTAREA,
+    group_id: SETTING_GROUPS.PREVIEW,
+    help: "支持预览的文本文件扩展名，用逗号分隔",
+    options: null,
+    sort_order: 1,
+    flag: SETTING_FLAGS.PUBLIC,
+    default_value:
+      "txt,htm,html,xml,java,properties,sql,js,md,json,conf,ini,vue,php,py,bat,yml,go,sh,c,cpp,h,hpp,tsx,vtt,srt,ass,rs,lrc,dockerfile,makefile,gitignore,license,readme",
+  },
+
+  preview_audio_types: {
+    key: "preview_audio_types",
+    type: SETTING_TYPES.TEXTAREA,
+    group_id: SETTING_GROUPS.PREVIEW,
+    help: "支持预览的音频文件扩展名，用逗号分隔",
+    options: null,
+    sort_order: 2,
+    flag: SETTING_FLAGS.PUBLIC,
+    default_value: "mp3,flac,ogg,m4a,wav,opus,wma",
+  },
+
+  preview_video_types: {
+    key: "preview_video_types",
+    type: SETTING_TYPES.TEXTAREA,
+    group_id: SETTING_GROUPS.PREVIEW,
+    help: "支持预览的视频文件扩展名，用逗号分隔",
+    options: null,
+    sort_order: 3,
+    flag: SETTING_FLAGS.PUBLIC,
+    default_value: "mp4,mkv,avi,mov,rmvb,webm,flv,m3u8,ts,m2ts",
+  },
+
+  preview_image_types: {
+    key: "preview_image_types",
+    type: SETTING_TYPES.TEXTAREA,
+    group_id: SETTING_GROUPS.PREVIEW,
+    help: "支持预览的图片文件扩展名，用逗号分隔",
+    options: null,
+    sort_order: 4,
+    flag: SETTING_FLAGS.PUBLIC,
+    default_value: "jpg,tiff,jpeg,png,gif,bmp,svg,ico,swf,webp,avif",
+  },
+
+  preview_office_types: {
+    key: "preview_office_types",
+    type: SETTING_TYPES.TEXTAREA,
+    group_id: SETTING_GROUPS.PREVIEW,
+    help: "支持预览的Office文档扩展名（需要在线转换），用逗号分隔",
+    options: null,
+    sort_order: 5,
+    flag: SETTING_FLAGS.PUBLIC,
+    default_value: "doc,docx,xls,xlsx,ppt,pptx,rtf",
+  },
+
+  preview_document_types: {
+    key: "preview_document_types",
+    type: SETTING_TYPES.TEXTAREA,
+    group_id: SETTING_GROUPS.PREVIEW,
+    help: "支持预览的文档文件扩展名（可直接预览），用逗号分隔",
+    options: null,
+    sort_order: 6,
+    flag: SETTING_FLAGS.PUBLIC,
+    default_value: "pdf",
   },
 
   // WebDAV设置组
@@ -157,7 +227,16 @@ export function validateSettingValue(key, value, type) {
 
     case SETTING_TYPES.TEXT:
     case SETTING_TYPES.TEXTAREA:
-      return typeof value === "string";
+      if (typeof value !== "string") return false;
+
+      // 预览设置的特殊验证
+      if (key.startsWith("preview_") && key.endsWith("_types")) {
+        // 验证扩展名列表格式：逗号分隔，只包含字母数字和点
+        const extensions = value.split(",").map((ext) => ext.trim().toLowerCase());
+        return extensions.every((ext) => /^[a-z0-9]+$/.test(ext));
+      }
+
+      return true;
 
     default:
       return true;

@@ -132,7 +132,7 @@
 <script setup>
 import { defineProps, defineEmits, computed } from "vue";
 import { api } from "@/api";
-import { isOffice as isOfficeFileType } from "@/utils/mimeUtils.js";
+import { FileType } from "@/utils/fileTypes.js";
 
 const props = defineProps({
   file: {
@@ -189,9 +189,9 @@ const getFilePassword = () => {
   return null;
 };
 
-// 检查是否为Office文件
+// 检查是否为Office文件 - 使用标准的文件类型判断
 const isOfficeFile = computed(() => {
-  return isOfficeFileType(props.file.mimetype, props.file.filename);
+  return props.file.type === FileType.OFFICE;
 });
 
 /**

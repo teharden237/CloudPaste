@@ -45,6 +45,11 @@
             <td :class="darkMode ? 'text-gray-300' : 'text-gray-900'" class="px-3 py-4">
               <div class="flex flex-col">
                 <div class="flex items-center">
+                  <!-- 文件图标 -->
+                  <div class="flex-shrink-0 mr-2 w-5 h-5">
+                    <span v-html="getFileIconClassLocal(file)"></span>
+                  </div>
+                  <!-- 文件名 -->
                   <span class="font-medium truncate max-w-xs" :title="file.filename">{{ truncateFilename(file.filename) }}</span>
                   <span v-if="file.has_password" class="ml-2" :title="'密码保护'">
                     <svg
@@ -73,8 +78,8 @@
               </div>
             </td>
             <td :class="darkMode ? 'text-gray-300' : 'text-gray-900'" class="px-3 py-4 whitespace-nowrap text-sm hidden md:table-cell">
-              <span class="px-2 py-1 text-xs rounded" :class="getMimeTypeClass(file.mimetype, file.filename)">
-                {{ getSimpleMimeType(file.mimetype, file.filename) }}
+              <span class="px-2 py-1 text-xs rounded" :class="getMimeTypeClass(file)">
+                {{ getSimpleMimeType(file.mimetype, file.filename, file) }}
               </span>
             </td>
             <td :class="darkMode ? 'text-gray-300' : 'text-gray-900'" class="px-3 py-4 whitespace-nowrap text-sm hidden sm:table-cell">
@@ -228,6 +233,11 @@
             </div>
             <div class="flex-1">
               <div class="flex items-center">
+                <!-- 文件图标 -->
+                <div class="flex-shrink-0 mr-2 w-5 h-5">
+                  <span v-html="getFileIconClassLocal(file)"></span>
+                </div>
+                <!-- 文件名 -->
                 <div class="font-medium" :class="darkMode ? 'text-white' : 'text-gray-900'" :title="file.filename">{{ truncateFilename(file.filename) }}</div>
                 <span v-if="file.has_password" class="ml-2" :title="'密码保护'">
                   <svg
@@ -269,8 +279,8 @@
           <div>
             <div class="text-xs font-medium uppercase" :class="darkMode ? 'text-gray-500' : 'text-gray-500'">类型</div>
             <div>
-              <span class="px-2 py-0.5 text-xs rounded" :class="getMimeTypeClass(file.mimetype, file.filename)">
-                {{ getSimpleMimeType(file.mimetype, file.filename) }}
+              <span class="px-2 py-0.5 text-xs rounded" :class="getMimeTypeClass(file)">
+                {{ getSimpleMimeType(file.mimetype, file.filename, file) }}
               </span>
             </div>
           </div>
@@ -396,8 +406,8 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, ref, reactive, computed } from "vue";
-import { formatFileSize as formatFileSizeUtil, formatMimeType as formatMimeTypeUtil, getMimeTypeBackgroundClass as getMimeTypeBackgroundClassUtil } from "@/utils/mimeUtils";
+import { defineProps, defineEmits, reactive, computed } from "vue";
+import { getDisplayName } from "@/utils/fileTypes.js";
 import { copyToClipboard } from "@/utils/clipboard";
 
 const props = defineProps({
@@ -431,6 +441,7 @@ const copiedPermanentFiles = reactive({});
 
 // 导入统一的工具函数
 import { getRemainingViews as getRemainingViewsUtil, getRemainingViewsClass as getRemainingViewsClassUtil, formatFileSize } from "@/utils/fileUtils.js";
+import { getFileIcon } from "@/utils/fileTypeIcons.js";
 
 /**
  * 计算剩余可访问次数
@@ -451,23 +462,69 @@ const getRemainingViewsClass = (file) => {
 };
 
 /**
- * 简化MIME类型显示
+ * 简化MIME类型显示（优先显示 MIME 类型，再显示后端的 typeName）
  * @param {string} mimeType - 完整MIME类型
- * @param {string} filename - 文件名（可选）
+ * @param {string} filename - 文件名
+ * @param {Object} file - 文件对象（包含后端返回的 typeName）
  * @returns {string} 简化的MIME类型
  */
-const getSimpleMimeType = (mimeType, filename) => {
-  return formatMimeTypeUtil(mimeType, filename);
+const getSimpleMimeType = (mimeType, filename, file) => {
+  // 优先显示 mimeType，再显示后端的 typeName
+  if (mimeType && mimeType !== "application/octet-stream") {
+    return mimeType;
+  }
+
+  // 如果 mimeType 无效，使用后端返回的 typeName
+  if (file?.typeName && file.typeName !== "unknown") {
+    return file.typeName;
+  }
+
+  // 最后回退：显示文件名（去掉扩展名）
+  return filename ? getDisplayName(filename) : "未知文件";
 };
 
 /**
- * 根据MIME类型获取样式类
- * @param {string} mimeType - 完整MIME类型
- * @param {string} filename - 文件名（可选）
+ * 根据文件类型获取样式类（基于后端返回的 type 字段）
+ * @param {Object} file - 文件对象（包含后端返回的 type 字段）
  * @returns {string} 样式类名
  */
-const getMimeTypeClass = (mimeType, filename) => {
-  return getMimeTypeBackgroundClassUtil(mimeType, filename, props.darkMode);
+const getMimeTypeClass = (file) => {
+  const type = file?.type;
+
+  // 根据文件类型返回不同的颜色
+  switch (type) {
+    case 1: // FOLDER
+      return props.darkMode ? "bg-blue-900/50 text-blue-300" : "bg-blue-100 text-blue-800";
+    case 2: // VIDEO
+      return props.darkMode ? "bg-purple-900/50 text-purple-300" : "bg-purple-100 text-purple-800";
+    case 3: // AUDIO
+      return props.darkMode ? "bg-green-900/50 text-green-300" : "bg-green-100 text-green-800";
+    case 4: // TEXT
+      return props.darkMode ? "bg-yellow-900/50 text-yellow-300" : "bg-yellow-100 text-yellow-800";
+    case 5: // IMAGE
+      return props.darkMode ? "bg-pink-900/50 text-pink-300" : "bg-pink-100 text-pink-800";
+    case 6: // OFFICE
+      return props.darkMode ? "bg-red-900/50 text-red-300" : "bg-red-100 text-red-800";
+    default: // UNKNOWN
+      return props.darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-700";
+  }
+};
+
+/**
+ * 获取文件图标HTML（使用后端返回的type字段）
+ * @param {Object} file - 文件对象（包含type字段）
+ * @returns {string} SVG图标HTML字符串
+ */
+const getFileIconClassLocal = (file) => {
+  // 直接使用后端返回的type字段
+  const fileItem = {
+    name: file.filename,
+    filename: file.filename,
+    isDirectory: false,
+    type: file.type,
+  };
+
+  return getFileIcon(fileItem, props.darkMode);
 };
 
 // 导入统一的时间处理工具

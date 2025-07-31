@@ -101,4 +101,47 @@ export default {
       updateFailed: "Failed to update WebDAV settings",
     },
   },
+
+  // Preview settings page
+  preview: {
+    title: "Preview Settings",
+    description: "Configure preview support for different file types",
+    loadError: "Failed to load preview settings",
+
+    textTypes: "Text File Types",
+    textTypesLabel: "Supported text file extensions",
+    textTypesPlaceholder:
+      "txt,htm,html,xml,java,properties,sql,js,md,json,conf,ini,vue,php,py,bat,yml,go,sh,c,cpp,h,hpp,tsx,vtt,srt,ass,rs,lrc,dockerfile,makefile,gitignore,license,readme",
+    textTypesHelp: "Comma-separated text file extensions that will be displayed using the text previewer",
+
+    imageTypes: "Image File Types",
+    imageTypesLabel: "Supported image file extensions",
+    imageTypesPlaceholder: "jpg,tiff,jpeg,png,gif,bmp,svg,ico,swf,webp",
+    imageTypesHelp: "Comma-separated image file extensions that will be displayed using the image previewer",
+
+    videoTypes: "Video File Types",
+    videoTypesLabel: "Supported video file extensions",
+    videoTypesPlaceholder: "mp4,htm,html,mkv,avi,mov,rmvb,webm,flv,m3u8",
+    videoTypesHelp:
+      "Video file extensions separated by commas, which will be previewed using a video player (playback depends on browser support, generally only supporting h.264 (mp4) encoded formats).",
+
+    audioTypes: "Audio File Types",
+    audioTypesLabel: "Supported audio file extensions",
+    audioTypesPlaceholder: "mp3,flac,ogg,m4a,wav,opus,wma",
+    audioTypesHelp: "Comma-separated audio file extensions that will be previewed using the audio player",
+
+    officeTypes: "Office File Types",
+    officeTypesLabel: "Supported Office file extensions (require online conversion)",
+    officeTypesPlaceholder: "doc,docx,xls,xlsx,ppt,pptx,rtf",
+    officeTypesHelp: "Comma-separated Office file extensions that will be converted and previewed through third-party services",
+
+    documentTypes: "Document File Types",
+    documentTypesLabel: "Supported document file extensions (direct preview)",
+    documentTypesPlaceholder: "pdf",
+    documentTypesHelp: "Comma-separated document file extensions that can be directly previewed in the browser",
+
+    resetDefaults: "Reset to Defaults",
+    resetConfirm: "Are you sure you want to reset to default settings? This will overwrite all current configurations.",
+    saveSuccess: "Preview settings saved successfully",
+  },
 };

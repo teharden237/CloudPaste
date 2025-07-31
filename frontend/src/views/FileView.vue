@@ -296,10 +296,15 @@ const openEditModal = async () => {
       response = await api.file.getFile(fileInfo.value.id);
 
       if (response.success) {
-        // 更新文件信息
+        // 更新文件信息，但保留分享相关的关键字段
         fileInfo.value = {
           ...response.data,
-          slug: fileInfo.value.slug, // 保留原来的slug
+          slug: fileInfo.value.slug, 
+          type: fileInfo.value.type, 
+          requires_password: fileInfo.value.requires_password, 
+          passwordVerified: fileInfo.value.passwordVerified, 
+          currentPassword: fileInfo.value.currentPassword, 
+          use_proxy: fileInfo.value.use_proxy, 
         };
       } else {
         console.error("获取文件详情失败:", response.message);

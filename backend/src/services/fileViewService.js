@@ -6,7 +6,7 @@
 import { RepositoryFactory } from "../repositories/index.js";
 import { verifyPassword } from "../utils/crypto.js";
 import { generatePresignedUrl, deleteFileFromS3 } from "../utils/s3Utils.js";
-import { getMimeTypeAndGroupFromFile, getContentTypeAndDisposition } from "../utils/fileUtils.js";
+import { getEffectiveMimeType, getContentTypeAndDisposition } from "../utils/fileUtils.js";
 import { getFileBySlug, isFileAccessible } from "./fileService.js";
 
 /**
@@ -171,7 +171,7 @@ export class FileViewService {
       }
 
       // 获取文件的MIME类型
-      const { mimeType: contentType } = getMimeTypeAndGroupFromFile(result.file.mimetype, result.file.filename);
+      const contentType = getEffectiveMimeType(result.file.mimetype, result.file.filename);
 
       // 生成预签名URL，使用S3配置的默认时效，传递MIME类型以确保正确的Content-Type
       // 注意：文件分享页面没有用户上下文，禁用缓存避免权限泄露
@@ -200,11 +200,7 @@ export class FileViewService {
       }
 
       // 获取内容类型和处置方式
-      const { contentType: finalContentType, contentDisposition } = getContentTypeAndDisposition({
-        filename: result.file.filename,
-        mimetype: result.file.mimetype,
-        forceDownload: forceDownload,
-      });
+      const { contentType: finalContentType, contentDisposition } = getContentTypeAndDisposition(result.file.filename, result.file.mimetype, { forceDownload: forceDownload });
 
       // 创建响应头
       const responseHeaders = new Headers();

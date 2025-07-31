@@ -2,6 +2,7 @@ import { DEFAULT_MAX_UPLOAD_SIZE_MB } from "../constants/index.js";
 import { SETTING_GROUPS } from "../constants/settings.js";
 import { getS3ConfigsWithUsage } from "./s3ConfigService.js";
 import { RepositoryFactory } from "../repositories/index.js";
+import previewSettingsCache from "../utils/previewSettingsCache.js";
 
 /**
  * 获取最大上传文件大小限制
@@ -191,7 +192,20 @@ export async function updateGroupSettings(db, groupId, settings, options = {}) {
     const repositoryFactory = new RepositoryFactory(db);
     const systemRepository = repositoryFactory.getSystemRepository();
 
-    return await systemRepository.updateGroupSettings(groupId, settings, options);
+    const result = await systemRepository.updateGroupSettings(groupId, settings, options);
+
+    // 如果是预览设置分组，刷新预览设置缓存
+    if (groupId === SETTING_GROUPS.PREVIEW) {
+      try {
+        await previewSettingsCache.refresh(db);
+        console.log("预览设置缓存已自动刷新");
+      } catch (cacheError) {
+        console.error("刷新预览设置缓存失败:", cacheError);
+        // 缓存刷新失败不影响设置更新的成功
+      }
+    }
+
+    return result;
   } catch (error) {
     console.error("批量更新分组设置错误:", error);
     throw new Error("批量更新分组设置失败: " + error.message);
