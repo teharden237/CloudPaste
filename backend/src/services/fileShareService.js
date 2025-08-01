@@ -9,7 +9,7 @@ import { HTTPException } from "hono/http-exception";
 import { ApiStatus } from "../constants/index.js";
 import { FileShareSystem } from "../storage/fs/FileShareSystem.js";
 import { RepositoryFactory } from "../repositories/index.js";
-import { generateFileId, generateUniqueFileSlug, generateShortId, getFileNameAndExt, getSafeFileName, formatFileSize } from "../utils/common.js";
+import { generateFileId, generateUniqueFileSlug, generateShortId, getFileNameAndExt, getSafeFileName, formatFileSize, shouldUseRandomSuffix } from "../utils/common.js";
 import { getMimeTypeFromFilename } from "../utils/fileUtils.js";
 import { hashPassword } from "../utils/crypto.js";
 import { GetFileType, getFileTypeName } from "../utils/fileTypeDetector.js";
@@ -235,7 +235,7 @@ export class FileShareService {
     const uniqueSlug = await generateUniqueFileSlug(this.db, slug, override === "true");
 
     // 生成存储路径
-    const storagePath = this._generateStoragePath(filename, customPath, userIdOrInfo, userType, config);
+    const storagePath = await this._generateStoragePath(filename, customPath, userIdOrInfo, userType, config);
     const contentType = getMimeTypeFromFilename(filename);
 
     // 处理密码
@@ -310,22 +310,30 @@ export class FileShareService {
    * 生成存储路径
    * @private
    */
-  _generateStoragePath(filename, customPath, userIdOrInfo, userType, config) {
-    const shortId = generateShortId();
-    const { name: baseName, ext: fileExt } = getFileNameAndExt(filename);
-    const safeFileName = getSafeFileName(baseName);
-
+  async _generateStoragePath(filename, customPath, userIdOrInfo, userType, config) {
     // 处理默认文件夹路径
     const folderPath = config.default_folder ? (config.default_folder.endsWith("/") ? config.default_folder : config.default_folder + "/") : "";
 
+    // 构建目标目录
+    let targetDirectory = folderPath;
     if (customPath) {
-      // 如果有自定义路径，组合：默认文件夹 + 自定义路径 + 文件名
       const normalizedCustomPath = customPath.endsWith("/") ? customPath : customPath + "/";
-      return folderPath + normalizedCustomPath + shortId + "-" + safeFileName + fileExt;
+      targetDirectory = folderPath + normalizedCustomPath;
+    }
+
+    // 根据系统设置决定文件命名策略
+    const useRandomSuffix = await shouldUseRandomSuffix(this.db);
+
+    const { name: baseName, ext: fileExt } = getFileNameAndExt(filename);
+    const safeFileName = getSafeFileName(baseName);
+
+    if (useRandomSuffix) {
+      // 随机后缀模式：避免文件名冲突，格式为 filename-shortId.ext
+      const shortId = generateShortId();
+      return targetDirectory + safeFileName + "-" + shortId + fileExt;
     } else {
-      // 没有自定义路径，使用：默认文件夹 + 文件名
-      // 无论是管理员还是API密钥用户，都使用相同的逻辑
-      return folderPath + shortId + "-" + safeFileName + fileExt;
+      // 覆盖模式：使用原始文件名（可能冲突）
+      return targetDirectory + safeFileName + fileExt;
     }
   }
 

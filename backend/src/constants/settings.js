@@ -87,13 +87,27 @@ export const DEFAULT_SETTINGS = {
     default_value: "0",
   },
 
+  file_naming_strategy: {
+    key: "file_naming_strategy",
+    type: SETTING_TYPES.SELECT,
+    group_id: SETTING_GROUPS.GLOBAL,
+    help: "文件命名策略：覆盖模式使用原始文件名（可能冲突），随机后缀模式避免冲突且保持文件名可读性。",
+    options: JSON.stringify([
+      { value: "overwrite", label: "覆盖模式" },
+      { value: "random_suffix", label: "随机后缀模式" },
+    ]),
+    sort_order: 4,
+    flag: SETTING_FLAGS.PUBLIC,
+    default_value: "overwrite",
+  },
+
   default_use_proxy: {
     key: "default_use_proxy",
     type: SETTING_TYPES.BOOL,
     group_id: SETTING_GROUPS.GLOBAL,
     help: "新文件的默认代理设置。启用后新文件默认使用Worker代理，禁用后默认使用直链。",
     options: null,
-    sort_order: 4,
+    sort_order: 5,
     flag: SETTING_FLAGS.PUBLIC,
     default_value: "false",
   },

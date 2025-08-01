@@ -1267,6 +1267,50 @@ async function migrateDatabase(db, currentVersion, targetVersion) {
           console.log("use_proxy默认值修改失败，请手动检查files表结构");
         }
         break;
+
+      case 15:
+        // 版本15：添加文件命名策略系统设置
+        try {
+          console.log("开始添加文件命名策略系统设置...");
+
+          // 检查设置是否已存在
+          const existingSetting = await db.prepare(`SELECT key FROM ${DbTables.SYSTEM_SETTINGS} WHERE key = ?`).bind("file_naming_strategy").first();
+
+          if (!existingSetting) {
+            // 添加文件命名策略设置
+            const options = JSON.stringify([
+              { value: "overwrite", label: "覆盖模式" },
+              { value: "random_suffix", label: "随机后缀模式" },
+            ]);
+
+            await db
+              .prepare(
+                `INSERT INTO ${DbTables.SYSTEM_SETTINGS} (key, value, description, type, group_id, options, sort_order, flags, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+              )
+              .bind(
+                "file_naming_strategy",
+                "overwrite",
+                "文件命名策略：覆盖模式使用原始文件名（可能冲突），随机后缀模式避免冲突且保持文件名可读性。",
+                "select",
+                1, // SETTING_GROUPS.GLOBAL
+                options,
+                4,
+                0 // SETTING_FLAGS.PUBLIC
+              )
+              .run();
+
+            console.log("成功添加文件命名策略设置");
+          } else {
+            console.log("文件命名策略设置已存在，跳过添加");
+          }
+
+          console.log("文件命名策略设置添加完成");
+        } catch (error) {
+          console.error(`版本15迁移失败:`, error);
+          console.log("文件命名策略设置迁移失败，请手动检查system_settings表");
+        }
+        break;
     }
 
     // 记录迁移历史
@@ -1444,7 +1488,7 @@ export async function checkAndInitDatabase(db) {
     }
 
     // 如果要添加新表或修改现有表，请递增目标版本，修改后启动时自动更新数据库
-    const targetVersion = 14; // 目标schema版本,每次修改表结构时递增
+    const targetVersion = 15; // 目标schema版本,每次修改表结构时递增
 
     if (currentVersion < targetVersion) {
       console.log(`需要更新数据库结构，当前版本:${currentVersion}，目标版本:${targetVersion}`);

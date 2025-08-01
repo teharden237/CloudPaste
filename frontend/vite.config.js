@@ -9,7 +9,7 @@ export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
   // 🎯 统一版本管理
-  const APP_VERSION = "0.7.4";
+  const APP_VERSION = "0.7.4.1";
   const isDev = command === "serve";
 
   // 打印环境变量，帮助调试

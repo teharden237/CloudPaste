@@ -14,6 +14,8 @@ export default {
       validationError: "请输入有效的上传大小限制",
       defaultUseProxyLabel: "新文件默认使用代理",
       defaultUseProxyHint: "启用后新文件默认使用Worker代理，禁用后默认使用直链",
+      fileOverwriteModeLabel: "文件覆盖模式",
+      fileOverwriteModeHint: "开启后直接覆盖同名文件，关闭则使用随机后缀避免冲突（如 document-a1B2c3.pdf）",
     },
     proxySignSettings: {
       title: "代理签名设置",
@@ -113,7 +115,7 @@ export default {
     textTypes: "文本文件类型",
     textTypesLabel: "支持的文本文件扩展名",
     textTypesPlaceholder:
-      "txt,htm,html,xml,java,properties,sql,js,md,json,conf,ini,vue,php,py,bat,yml,go,sh,c,cpp,h,hpp,tsx,vtt,srt,ass,rs,lrc,dockerfile,makefile,gitignore,license,readme",
+        "txt,htm,html,xml,java,properties,sql,js,md,json,conf,ini,vue,php,py,bat,yml,go,sh,c,cpp,h,hpp,tsx,vtt,srt,ass,rs,lrc,dockerfile,makefile,gitignore,license,readme",
     textTypesHelp: "用逗号分隔的文本文件扩展名，这些文件将使用文本预览器显示",
 
     imageTypes: "图片文件类型",

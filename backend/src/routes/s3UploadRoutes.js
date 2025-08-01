@@ -1,7 +1,16 @@
 import { Hono } from "hono";
 import { DbTables } from "../constants/index.js";
 import { ApiStatus } from "../constants/index.js";
-import { createErrorResponse, generateFileId, generateShortId, getSafeFileName, getFileNameAndExt, formatFileSize, generateUniqueFileSlug } from "../utils/common.js";
+import {
+  createErrorResponse,
+  generateFileId,
+  generateShortId,
+  getSafeFileName,
+  getFileNameAndExt,
+  formatFileSize,
+  generateUniqueFileSlug,
+  shouldUseRandomSuffix,
+} from "../utils/common.js";
 import { getMimeTypeFromFilename } from "../utils/fileUtils.js";
 import { generatePresignedPutUrl, buildS3Url, deleteFileFromS3, generatePresignedUrl, createS3Client } from "../utils/s3Utils.js";
 import { authGateway } from "../middlewares/authGatewayMiddleware.js";
@@ -425,20 +434,27 @@ app.put("/api/upload-direct/:filename", authGateway.requireFile(), async (c) => 
     const { name: fileName, ext: fileExt } = getFileNameAndExt(filename);
     const safeFileName = getSafeFileName(fileName).substring(0, 50); // 限制长度
 
-    // 生成短ID
-    const shortId = generateShortId();
+    // 根据系统设置或用户参数决定文件命名策略
+    let useRandomSuffix;
+    if (useOriginalFilename !== undefined) {
+      // 用户明确指定了是否使用原始文件名
+      useRandomSuffix = !useOriginalFilename;
+    } else {
+      // 使用系统设置
+      useRandomSuffix = await shouldUseRandomSuffix(db);
+    }
 
     // 组合最终路径
+    const folderPath = s3Config.default_folder ? (s3Config.default_folder.endsWith("/") ? s3Config.default_folder : s3Config.default_folder + "/") : "";
+
     let storagePath;
-    if (authType === "apikey") {
-      // 对于API密钥用户，使用简化的路径处理
-      // 存储操作不需要挂载点权限检查，直接使用默认文件夹
-      const folderPath = s3Config.default_folder ? (s3Config.default_folder.endsWith("/") ? s3Config.default_folder : s3Config.default_folder + "/") : "";
-      storagePath = folderPath + customPath + (useOriginalFilename ? "" : shortId + "-") + safeFileName + fileExt;
+    if (useRandomSuffix) {
+      // 使用随机后缀避免冲突，格式为 filename-shortId.ext
+      const shortId = generateShortId();
+      storagePath = folderPath + customPath + safeFileName + "-" + shortId + fileExt;
     } else {
-      // 对于管理员用户，使用默认文件夹
-      const folderPath = s3Config.default_folder ? (s3Config.default_folder.endsWith("/") ? s3Config.default_folder : s3Config.default_folder + "/") : "";
-      storagePath = folderPath + customPath + (useOriginalFilename ? "" : shortId + "-") + safeFileName + fileExt;
+      // 使用原始文件名（可能冲突）
+      storagePath = folderPath + customPath + safeFileName + fileExt;
     }
 
     // 获取加密密钥
