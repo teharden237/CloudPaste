@@ -2,12 +2,12 @@
   <div class="vditor-editor-wrapper">
     <!-- 纯文本编辑器 (在纯文本模式下显示) -->
     <textarea
-      v-if="isPlainTextMode"
-      class="w-full h-[600px] p-4 font-mono text-base border rounded-lg resize-y focus:outline-none focus:ring-2"
-      :class="darkMode ? 'bg-gray-800 border-gray-700 text-gray-100 focus:ring-primary-600' : 'bg-white border-gray-300 text-gray-900 focus:ring-primary-500'"
-      v-model="plainTextContent"
-      :placeholder="$t('markdown.plainTextPlaceholder')"
-      @input="syncContentFromPlainText"
+        v-if="isPlainTextMode"
+        class="w-full h-[600px] p-4 font-mono text-base border rounded-lg resize-y focus:outline-none focus:ring-2"
+        :class="darkMode ? 'bg-gray-800 border-gray-700 text-gray-100 focus:ring-primary-600' : 'bg-white border-gray-300 text-gray-900 focus:ring-primary-500'"
+        v-model="plainTextContent"
+        :placeholder="$t('markdown.plainTextPlaceholder')"
+        @input="syncContentFromPlainText"
     ></textarea>
 
     <!-- Markdown编辑器 (在Markdown模式下显示) -->
@@ -30,9 +30,9 @@ const loadVditor = async () => {
   if (!VditorClass) {
     await loadVditorCSS();
 
-    // 从本地dist目录加载Vditor
+    // 从本地assets/vditor目录加载Vditor
     const script = document.createElement("script");
-    script.src = "/dist/index.min.js";
+    script.src = "/assets/vditor/index.min.js";
 
     return new Promise((resolve, reject) => {
       script.onload = () => {
@@ -50,7 +50,7 @@ const loadVditorCSS = async () => {
   if (!vditorCSSLoaded) {
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = "/dist/index.css";
+    link.href = "/assets/vditor/index.css";
     document.head.appendChild(link);
     vditorCSSLoaded = true;
   }
@@ -116,7 +116,7 @@ const emit = defineEmits(["update:modelValue", "editor-ready", "content-change",
 // 编辑器实例
 let editor = null;
 
-// 纯文本内容 
+// 纯文本内容
 const plainTextContent = ref("");
 // 原始纯文本内容（保留格式）
 const originalPlainTextContent = ref("");
@@ -152,7 +152,7 @@ const initEditor = async () => {
       width: "100%",
       mode: defaultMode,
       theme: editorTheme,
-      cdn: "",
+      cdn: "/assets/vditor",
       resize: {
         enable: true,
         position: "bottom",
@@ -172,13 +172,13 @@ const initEditor = async () => {
         mode: "both",
         theme: {
           current: contentTheme,
-          path: "/dist/css/content-theme",
+          path: "/assets/vditor/dist/css/content-theme",
         },
         hljs: {
           lineNumber: true,
           style: props.darkMode ? "vs2015" : "github",
-          js: "/dist/js/highlight.js/third-languages.js",
-          css: (style) => `/dist/js/highlight.js/styles/${style}.min.css`,
+          js: "/assets/vditor/dist/js/highlight.js/third-languages.js",
+          css: (style) => `/assets/vditor/dist/js/highlight.js/styles/${style}.min.css`,
         },
         actions: ["desktop", "tablet", "mobile", "mp-wechat", "zhihu"],
         markdown: {
@@ -329,7 +329,7 @@ const initEditor = async () => {
   }
 };
 
-// 安全设置编辑器内容 
+// 安全设置编辑器内容
 const safeSetValue = (content) => {
   if (!editor || !editor.setValue || typeof editor.setValue !== "function") return;
 
@@ -351,7 +351,7 @@ const syncContentFromPlainText = () => {
   emit("content-change", plainTextContent.value);
 };
 
-// 获取编辑器内容 
+// 获取编辑器内容
 const getValue = () => {
   if (props.isPlainTextMode) {
     return originalPlainTextContent.value || plainTextContent.value;
@@ -410,98 +410,98 @@ const clearContent = () => {
 
 // 监听内容变化
 watch(
-  () => props.modelValue,
-  (newValue) => {
-    // 避免不必要的getValue()调用
-    if (newValue !== lastKnownValue) {
-      setValue(newValue);
-      lastKnownValue = newValue;
-    }
-  },
-  { immediate: true }
+    () => props.modelValue,
+    (newValue) => {
+      // 避免不必要的getValue()调用
+      if (newValue !== lastKnownValue) {
+        setValue(newValue);
+        lastKnownValue = newValue;
+      }
+    },
+    { immediate: true }
 );
 
 // 监听暗色模式变化
 watch(
-  () => props.darkMode,
-  async (newDarkMode, oldDarkMode) => {
-    if (!props.isPlainTextMode && editor && newDarkMode !== oldDarkMode) {
-      try {
-        let currentValue = "";
+    () => props.darkMode,
+    async (newDarkMode, oldDarkMode) => {
+      if (!props.isPlainTextMode && editor && newDarkMode !== oldDarkMode) {
+        try {
+          let currentValue = "";
 
-        // 安全地获取当前内容
-        if (editor && editor.getValue && typeof editor.getValue === "function") {
-          try {
-            currentValue = editor.getValue();
-          } catch (e) {
-            console.warn("获取编辑器内容失败，使用空内容:", e);
-            currentValue = "";
+          // 安全地获取当前内容
+          if (editor && editor.getValue && typeof editor.getValue === "function") {
+            try {
+              currentValue = editor.getValue();
+            } catch (e) {
+              console.warn("获取编辑器内容失败，使用空内容:", e);
+              currentValue = "";
+            }
           }
-        }
 
-        // 重新初始化编辑器以应用新主题
-        if (editor.destroy) {
-          editor.destroy();
-        }
-        editor = null;
+          // 重新初始化编辑器以应用新主题
+          if (editor.destroy) {
+            editor.destroy();
+          }
+          editor = null;
 
-        await initEditor();
+          await initEditor();
 
-        // 设置内容
-        if (currentValue) {
-          safeSetValue(currentValue);
+          // 设置内容
+          if (currentValue) {
+            safeSetValue(currentValue);
+          }
+        } catch (error) {
+          console.error("切换主题时出错:", error);
         }
-      } catch (error) {
-        console.error("切换主题时出错:", error);
       }
     }
-  }
 );
 
 // 监听模式切换
 watch(
-  () => props.isPlainTextMode,
-  async (newMode, oldMode) => {
-    if (!newMode && oldMode !== newMode) {
-      // 切换到Markdown模式
-      await nextTick();
+    () => props.isPlainTextMode,
+    async (newMode, oldMode) => {
+      if (!newMode && oldMode !== newMode) {
+        // 切换到Markdown模式
+        await nextTick();
 
-      if (editor) {
-        try {
-          if (editor.destroy) {
-            editor.destroy();
+        if (editor) {
+          try {
+            if (editor.destroy) {
+              editor.destroy();
+            }
+          } catch (e) {
+            console.error("销毁编辑器时出错:", e);
           }
-        } catch (e) {
-          console.error("销毁编辑器时出错:", e);
+          editor = null;
         }
-        editor = null;
-      }
 
-      // 初始化编辑器
-      const initializeEditor = async () => {
-        try {
-          await initEditor();
+        // 初始化编辑器
+        const initializeEditor = async () => {
+          try {
+            await initEditor();
 
-          // 设置内容
-          const contentToSet = plainTextContent.value || "";
-          if (contentToSet) {
-            safeSetValue(contentToSet);
+            // 设置内容
+            const contentToSet = plainTextContent.value || "";
+            if (contentToSet) {
+              safeSetValue(contentToSet);
+            }
+          } catch (error) {
+            console.error("初始化编辑器时出错:", error);
           }
-        } catch (error) {
-          console.error("初始化编辑器时出错:", error);
-        }
-      };
+        };
 
-      if (window.requestIdleCallback) {
-        window.requestIdleCallback(initializeEditor, { timeout: 1000 });
-      } else {
-        setTimeout(initializeEditor, 100);
+        if (window.requestIdleCallback) {
+          window.requestIdleCallback(initializeEditor, { timeout: 1000 });
+        } else {
+          setTimeout(initializeEditor, 100);
+        }
       }
     }
-  }
 );
 
-// 组件挂载 
+// 组件挂载
 onMounted(async () => {
   if (!props.isPlainTextMode) {
     await nextTick();
