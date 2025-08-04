@@ -69,7 +69,7 @@ const loadVditor = async () => {
     try {
       await loadVditorCSS();
 
-      // 从本地assets/vditor目录加载Vditor
+      // 从本地vditor目录加载Vditor
       const script = document.createElement("script");
       script.src = "/assets/vditor/dist/index.min.js";
 

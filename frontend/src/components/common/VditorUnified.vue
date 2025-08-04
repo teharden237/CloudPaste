@@ -30,7 +30,7 @@ const loadVditor = async () => {
   if (!VditorClass) {
     await loadVditorCSS();
 
-    // 从本地assets/vditor目录加载Vditor
+    // 从本地vditor目录加载Vditor
     const script = document.createElement("script");
     script.src = "/assets/vditor/dist/index.min.js";
 
@@ -177,6 +177,8 @@ const initEditor = async () => {
         hljs: {
           lineNumber: true,
           style: props.darkMode ? "vs2015" : "github",
+          js: "/assets/vditor/dist/js/highlight.js/third-languages.js",
+          css: (style) => `/assets/vditor/dist/js/highlight.js/styles/${style}.min.css`,
         },
         actions: ["desktop", "tablet", "mobile", "mp-wechat", "zhihu"],
         markdown: {
