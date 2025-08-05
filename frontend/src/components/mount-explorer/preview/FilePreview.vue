@@ -443,15 +443,18 @@
         </div>
 
         <!-- Markdown预览 - 使用TextRenderer统一处理 -->
-        <div v-else-if="isMarkdown">
+        <div v-else-if="isMarkdown" :class="isContentFullscreen ? 'fullscreen-text-container' : ''">
           <TextPreview
             ref="textPreviewRef"
             :file="file"
             :text-url="authenticatedPreviewUrl"
             :dark-mode="darkMode"
             :is-admin="isAdmin"
+            :current-path="getCurrentDirectoryPath()"
+            :directory-items="directoryItems"
             :initial-mode="textPreviewMode"
             :initial-encoding="textEncoding"
+            :max-height="dynamicMaxHeight"
             @load="handleContentLoaded"
             @error="handleContentError"
             @mode-change="handleModeChange"
