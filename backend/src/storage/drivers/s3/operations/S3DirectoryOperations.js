@@ -7,6 +7,7 @@ import { HTTPException } from "hono/http-exception";
 import { ApiStatus, FILE_TYPES, FILE_TYPE_NAMES } from "../../../../constants/index.js";
 import { S3Client, ListObjectsV2Command, PutObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { checkDirectoryExists, updateParentDirectoriesModifiedTime } from "../utils/S3DirectoryUtils.js";
+import { isMountRootPath } from "../utils/S3PathUtils.js";
 import { directoryCacheManager, clearDirectoryCache } from "../../../../cache/index.js";
 import { handleFsError } from "../../../fs/utils/ErrorHandler.js";
 import { GetFileType, getFileTypeName } from "../../../../utils/fileTypeDetector.js";
@@ -124,7 +125,6 @@ export class S3DirectoryOperations {
             }
           }
         }
-
 
         // 构造返回结果结构
         const result = {
@@ -279,6 +279,17 @@ export class S3DirectoryOperations {
 
     return handleFsError(
       async () => {
+        // 特殊处理：如果s3SubPath为挂载点根目录，直接返回成功
+        // 因为挂载点根目录在逻辑上总是存在的，不需要在S3中创建
+        if (isMountRootPath(s3SubPath)) {
+          console.log(`跳过创建挂载点根目录（逻辑上总是存在）: "${s3SubPath}"`);
+          return {
+            success: true,
+            path: path,
+            message: "挂载点根目录总是存在",
+          };
+        }
+
         // nginx风格的递归创建功能：自动创建所有需要的中间目录
         // 参考nginx WebDAV模块的create_full_put_path功能
         console.log(`开始递归创建目录: ${s3SubPath}`);
@@ -335,6 +346,16 @@ export class S3DirectoryOperations {
    * @private
    */
   async _createSingleDirectory(s3SubPath) {
+    // 特殊处理：如果s3SubPath为挂载点根目录，直接返回成功
+    // 因为S3中不能创建空Key的对象，而挂载点根目录在逻辑上总是存在的
+    if (isMountRootPath(s3SubPath)) {
+      console.log(`跳过创建挂载点根目录（S3不支持空Key）: "${s3SubPath}"`);
+      return {
+        success: true,
+        message: "挂载点根目录总是存在",
+      };
+    }
+
     // 检查目录是否已存在
     try {
       const headParams = {
