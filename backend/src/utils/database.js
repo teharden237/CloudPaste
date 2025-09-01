@@ -864,7 +864,8 @@ async function addPreviewSettings(db) {
   const previewSettings = [
     {
       key: "preview_text_types",
-      value: "txt,htm,html,xml,java,properties,sql,js,md,json,conf,ini,vue,php,py,bat,yml,go,sh,c,cpp,h,hpp,tsx,vtt,srt,ass,rs,lrc,dockerfile,makefile,gitignore,license,readme",
+      value:
+        "txt,htm,html,xml,java,properties,sql,js,md,json,conf,ini,vue,php,py,bat,yml,yaml,go,sh,c,cpp,h,hpp,tsx,vtt,srt,ass,rs,lrc,dockerfile,makefile,gitignore,license,readme",
       description: "支持预览的文本文件扩展名，用逗号分隔",
       type: "textarea",
       group_id: 2,
