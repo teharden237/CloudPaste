@@ -1,6 +1,7 @@
 /**
  * 通用工具函数
  */
+import { UserType } from "../constants/index.js";
 
 /**
  * 生成随机字符串
@@ -30,9 +31,6 @@ export function createErrorResponse(statusCode, message) {
     data: null,
   };
 }
-
-// getLocalTimeString() 函数已被移除
-// 现在所有时间处理都使用 CURRENT_TIMESTAMP 以支持更好的国际化
 
 /**
  * 格式化文件大小
@@ -242,6 +240,54 @@ export async function generateUniqueFileSlug(db, customSlug = null, override = f
 }
 
 /**
+ * 解析查询参数为整数
+ * @param {import('hono').Context} c
+ * @param {string} key
+ * @param {number} defaultValue
+ * @returns {number}
+ */
+export function getQueryInt(c, key, defaultValue = 0) {
+  const val = c.req.query(key);
+  if (val === undefined || val === null || val === "") return defaultValue;
+  const n = parseInt(val, 10);
+  return Number.isFinite(n) ? n : defaultValue;
+}
+
+/**
+ * 解析查询参数为布尔值（支持 true/1/false/0）
+ * @param {import('hono').Context} c
+ * @param {string} key
+ * @param {boolean} defaultValue
+ * @returns {boolean}
+ */
+export function getQueryBool(c, key, defaultValue = false) {
+  const val = c.req.query(key);
+  if (val === undefined || val === null || val === "") return defaultValue;
+  const lowered = String(val).toLowerCase();
+  if (lowered === "true" || lowered === "1") return true;
+  if (lowered === "false" || lowered === "0") return false;
+  return defaultValue;
+}
+
+/**
+ * 标准化分页解析：优先使用 offset，缺失时按 page 计算
+ * @param {import('hono').Context} c
+ * @param {{limit?:number,page?:number,offset?:number}} defaults
+ * @returns {{limit:number,page:number,offset:number}}
+ */
+export function getPagination(c, defaults = {}) {
+  const limitDefault = defaults.limit ?? 30;
+  const pageDefault = defaults.page ?? 1;
+  const offsetDefault = defaults.offset ?? 0;
+
+  const limit = getQueryInt(c, "limit", limitDefault);
+  const page = getQueryInt(c, "page", pageDefault);
+  const hasOffset = c.req.query("offset") !== undefined;
+  const offset = hasOffset ? getQueryInt(c, "offset", offsetDefault) : Math.max(0, (page - 1) * limit);
+  return { limit, page, offset };
+}
+
+/**
  * 处理文件覆盖逻辑的辅助函数
  * @private
  */
@@ -250,12 +296,12 @@ async function handleFileOverride(existingFile, overrideContext) {
     throw new Error("覆盖操作需要提供上下文信息");
   }
 
-  const { userIdOrInfo, userType, encryptionSecret, repositoryFactory } = overrideContext;
+  const { userIdOrInfo, userType, encryptionSecret, repositoryFactory, db } = overrideContext;
 
   console.log(`覆盖模式：删除已存在的文件记录 Slug: ${existingFile.slug}`);
 
   // 检查当前用户是否为文件创建者
-  const currentCreator = userType === "admin" ? userIdOrInfo : `apikey:${userIdOrInfo}`;
+  const currentCreator = userType === UserType.ADMIN ? userIdOrInfo : `apikey:${userIdOrInfo}`;
   if (existingFile.created_by !== currentCreator) {
     console.log(`覆盖操作被拒绝：用户 ${currentCreator} 尝试覆盖 ${existingFile.created_by} 创建的文件`);
     const { HTTPException } = await import("hono/http-exception");
@@ -292,10 +338,8 @@ async function handleFileOverride(existingFile, overrideContext) {
 
     // 清除与文件相关的缓存（仅对S3存储类型）
     if (existingFile.storage_type === "S3" && existingFile.storage_config_id) {
-      const { clearDirectoryCache } = await import("../cache/index.js");
-      // 需要传递db参数，从repositoryFactory获取
-      const db = repositoryFactory.db || repositoryFactory._db;
-      await clearDirectoryCache({ db, s3ConfigId: existingFile.storage_config_id });
+      const { invalidateFsCache } = await import("../cache/invalidation.js");
+      invalidateFsCache({ s3ConfigId: existingFile.storage_config_id, reason: "file-override", db });
     }
   } catch (deleteError) {
     console.error(`删除旧文件记录时出错: ${deleteError.message}`);
