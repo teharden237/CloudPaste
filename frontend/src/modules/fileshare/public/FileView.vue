@@ -62,28 +62,28 @@
       <FileEditModal v-if="showEditModal" :file="fileInfo" @close="closeEditModal" @save="saveFileChanges" />
     </div>
 
-    <!-- 错误提示组件 -->
-    <ErrorToast :visible="showErrorToast" :title="errorTitle" :message="errorMessage" @close="closeErrorToast" />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, defineProps, onUnmounted } from "vue";
+import { ref, computed, onMounted, defineProps, onUnmounted, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/stores/authStore.js";
 import { useFileshareService } from "@/modules/fileshare/fileshareService.js";
 import { useFileShareStore } from "@/modules/fileshare/fileShareStore.js";
+import { useGlobalMessage } from "@/composables/core/useGlobalMessage.js";
 
 const { t } = useI18n();
 const fileshareService = useFileshareService();
 const fileShareStore = useFileShareStore();
+const { showError, showSuccess } = useGlobalMessage();
 
 // 导入子组件
 import FileViewInfo from "@/modules/fileshare/public/components/FileViewInfo.vue";
 import FileViewPassword from "@/modules/fileshare/public/components/FileViewPassword.vue";
 import FileViewActions from "@/modules/fileshare/public/components/FileViewActions.vue";
 import FileEditModal from "@/components/file/FileEditModal.vue";
-import ErrorToast from "@/components/common/ErrorToast.vue";
 
 const props = defineProps({
   slug: {
@@ -95,6 +95,9 @@ const props = defineProps({
     default: false,
   },
 });
+
+const router = useRouter();
+const route = useRoute();
 
 // 状态变量
 const slug = ref(props.slug);
@@ -112,25 +115,6 @@ const showEditModal = ref(false);
 const showDeleteSuccess = ref(false);
 const redirectCountdown = ref(3);
 let countdownTimer = null;
-
-// 错误提示状态
-const showErrorToast = ref(false);
-const errorTitle = ref("");
-const errorMessage = ref("");
-
-// 显示错误提示
-const showError = (title, message) => {
-  errorTitle.value = title;
-  errorMessage.value = message;
-  showErrorToast.value = true;
-};
-
-// 关闭错误提示
-const closeErrorToast = () => {
-  showErrorToast.value = false;
-  errorTitle.value = "";
-  errorMessage.value = "";
-};
 
 // 使用认证Store
 const authStore = useAuthStore();
@@ -157,13 +141,13 @@ const refreshFileInfo = async () => {
   }
 
   // 重新加载文件信息
-  await loadFileInfo();
+  await loadFileInfo(true);
 };
 
 /**
  * 加载文件信息
  */
-const loadFileInfo = async () => {
+const loadFileInfo = async (force = false) => {
   loading.value = true;
   error.value = "";
 
@@ -175,7 +159,8 @@ const loadFileInfo = async () => {
       return;
     }
 
-    const data = await fileShareStore.fetchBySlug(fileSlug, { useCache: true });
+    // force=true 时跳过缓存，确保拿到最新数据
+    const data = await fileShareStore.fetchBySlug(fileSlug, { useCache: !force });
 
     fileInfo.value = {
       ...data,
@@ -280,21 +265,39 @@ const closeEditModal = () => {
 const saveFileChanges = async (updatedFile) => {
   try {
     if (!updatedFile?.id) {
-      showError(t("fileView.errors.updateFailed"), t("fileView.errors.missingId"));
+      showError(`${t("fileView.errors.updateFailed")}: ${t("fileView.errors.missingId")}`);
       return;
     }
 
     // 使用 fileshareService 统一更新文件元数据
-    // 约定：成功时正常返回（true 或领域数据），失败时抛出 Error
-    await fileshareService.updateFileMetadata(updatedFile.id, updatedFile);
+    const result = await fileshareService.updateFileMetadata(updatedFile.id, updatedFile);
+    const updatedSlug = result && typeof result === "object" && result.slug ? result.slug : fileInfo.value.slug;
+    const slugChanged = updatedSlug && updatedSlug !== fileInfo.value.slug;
 
-    // 更新成功，重新加载文件信息并关闭弹窗
-    await loadFileInfo();
+    if (slugChanged) {
+      slug.value = updatedSlug;
+    }
+
+    // 更新成功，重新加载文件信息并关闭弹窗（强制刷新，避免使用旧缓存）
+    await loadFileInfo(true);
+    if (slugChanged) {
+      try {
+        await router.replace({
+          name: "FileView",
+          params: { slug: updatedSlug },
+          query: route.query,
+          hash: route.hash,
+        });
+      } catch (replaceError) {
+        console.warn("跳转新链接失败", replaceError);
+      }
+    }
     closeEditModal();
+    showSuccess(t("fileView.actions.updateSuccess"));
   } catch (err) {
     console.error("更新文件错误:", err);
     const msg = err?.message || t("fileView.errors.unknown");
-    showError(t("fileView.errors.updateFailed"), msg);
+    showError(`${t("fileView.errors.updateFailed")}: ${msg}`);
   }
 };
 
@@ -339,4 +342,14 @@ onUnmounted(() => {
     countdownTimer = null;
   }
 });
+
+watch(
+  () => props.slug,
+  (newSlug) => {
+    if (newSlug && newSlug !== slug.value) {
+      slug.value = newSlug;
+      loadFileInfo(true);
+    }
+  }
+);
 </script>

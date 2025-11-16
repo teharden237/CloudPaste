@@ -22,11 +22,61 @@
           :is-admin="isAdmin"
           @upload-success="handleUploadSuccess"
           @upload-error="handleUploadError"
+          @share-results="handleShareResults"
         />
       </div>
 
+      <!-- 分享链接 -->
+      <div v-if="shareResults.length" class="card mb-6 p-4 sm:p-6">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+          <h3 class="text-lg font-medium" :class="darkMode ? 'text-gray-100' : 'text-gray-800'">{{ t("file.shareResultsTitle") }}</h3>
+          <button
+            type="button"
+            class="px-3 py-1.5 text-sm rounded-md border"
+            :class="darkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-600 hover:bg-gray-100'"
+            @click="clearShareResults"
+          >
+            {{ t("file.clearShareResults") }}
+          </button>
+        </div>
+
+        <div :class="shareListContainerClass">
+          <div
+            v-for="item in shareResults"
+            :key="item.id || item.slug || item.shareUrl"
+            class="rounded-md border px-3 py-2.5 flex flex-col gap-1.5"
+            :class="darkMode ? 'border-gray-700 bg-gray-800/60' : 'border-gray-200 bg-white'"
+          >
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+              <span class="text-sm font-medium truncate" :class="darkMode ? 'text-gray-100' : 'text-gray-800'">{{ item.filename }}</span>
+              <span v-if="item.storageLabel" class="text-xs px-2 py-0.5 rounded-full" :class="darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'">
+                {{ item.storageLabel }}
+              </span>
+            </div>
+
+            <ShareLinkBox
+              :dark-mode="darkMode"
+              :label="t('file.sharePrimaryLinkLabel')"
+              :share-link="item.shareUrl"
+              :copy-tooltip="t('file.copyLink')"
+              :copy-success-text="t('file.linkCopied')"
+              :copy-failure-text="t('file.copyFailed')"
+              :show-qr-button="true"
+              :qr-tooltip="t('file.showQRCode')"
+              :secondary-link="item.downloadUrl"
+              :secondary-tooltip="t('file.copyDirectLink')"
+              :secondary-success-text="t('file.directLinkCopied')"
+              :secondary-failure-text="t('file.copyFailed')"
+              :show-countdown="false"
+              @show-qr-code="openShareQRCode"
+              @status-message="handleShareBoxStatus"
+            />
+          </div>
+        </div>
+      </div>
+
       <!-- 最近上传记录 -->
-      <div v-if="recentFiles.length > 0" class="card p-4 sm:p-6">
+      <div v-if="canLoadRecentFiles && recentFiles.length > 0" class="card p-4 sm:p-6">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-medium">{{ t("file.recentUploads") }}</h3>
           <span class="text-sm" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">{{ t("file.showingRecent") }}</span>
@@ -34,15 +84,19 @@
         <FileList :dark-mode="darkMode" :files="recentFiles" :loading="loadingFiles" :user-type="isAdmin ? 'admin' : 'apikey'" @refresh="loadFiles" />
       </div>
     </div>
+
+    <QRCodeModal :visible="showShareQrModal" :share-link="currentShareLink" @close="closeShareQRCode" @status-message="handleShareBoxStatus" />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, onBeforeUnmount } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { storeToRefs } from "pinia";
 import FileUploader from "@/modules/upload/public/components/FileUploader.vue";
 import FileList from "@/modules/upload/public/components/FileList.vue";
 import PermissionManager from "@/components/common/PermissionManager.vue";
+import ShareLinkBox from "@/components/common/ShareLinkBox.vue";
+import QRCodeModal from "@/modules/paste/editor/components/QRCodeModal.vue";
 import { useI18n } from "vue-i18n"; // 导入i18n
 import { useAuthStore } from "@/stores/authStore.js";
 import { useStorageConfigsStore } from "@/stores/storageConfigsStore.js";
@@ -55,7 +109,7 @@ const { showSuccess, showError, showWarning } = useGlobalMessage();
 
 // 使用认证Store
 const authStore = useAuthStore();
-const { isAdmin, hasFilePermission } = storeToRefs(authStore);
+const { isAdmin, hasFilePermission, hasFileManagePermission } = storeToRefs(authStore);
 
 const props = defineProps({
   darkMode: {
@@ -68,9 +122,21 @@ const props = defineProps({
 const storageConfigsStore = useStorageConfigsStore();
 const files = ref([]);
 const loadingFiles = ref(false);
+const shareResults = ref([]);
+const shareResultsCacheKey = (item) => item?.id || item?.slug || item?.shareUrl || `${item?.filename || ""}-${item?.shareUrl || ""}`;
+const shareListContainerClass = computed(() => {
+  const base = "space-y-3";
+  if (shareResults.value.length > 3) {
+    return `${base} share-results-scroll`;
+  }
+  return base;
+});
+const showShareQrModal = ref(false);
+const currentShareLink = ref("");
 
 // 从Store获取权限状态的计算属性
 const hasPermission = computed(() => hasFilePermission.value);
+const canLoadRecentFiles = computed(() => hasFileManagePermission.value);
 
 // 计算最近3条记录
 const recentFiles = computed(() => {
@@ -90,10 +156,17 @@ const handlePermissionChange = async (hasPermissionValue) => {
 
   if (hasPermissionValue) {
     console.log("用户获得权限，开始加载配置和文件列表");
-    await Promise.all([loadStorageConfigs({ force: true }), loadFiles()]);
+    const tasks = [loadStorageConfigs({ force: true })];
+    if (canLoadRecentFiles.value) {
+      tasks.push(loadFiles());
+    } else {
+      files.value = [];
+    }
+    await Promise.all(tasks);
   } else {
     console.log("用户失去权限，清空数据");
     files.value = [];
+    shareResults.value = [];
   }
 };
 
@@ -114,7 +187,10 @@ const loadStorageConfigs = async (options = {}) => {
 
 // 加载已上传文件列表
 const loadFiles = async () => {
-  if (!hasPermission.value) return;
+  if (!hasPermission.value || !canLoadRecentFiles.value) {
+    files.value = [];
+    return;
+  }
 
   loadingFiles.value = true;
   try {
@@ -131,9 +207,56 @@ const loadFiles = async () => {
 // 处理上传成功事件
 const handleUploadSuccess = (fileData) => {
   // 刷新文件列表
-  loadFiles();
+  if (canLoadRecentFiles.value) {
+    loadFiles();
+  }
 
   showSuccess(t("file.uploadSuccessful"));
+};
+
+const handleShareResults = (results = []) => {
+  if (!Array.isArray(results) || !results.length) return;
+  const map = new Map();
+  shareResults.value.forEach((item) => {
+    const key = shareResultsCacheKey(item);
+    if (key) {
+      map.set(key, item);
+    }
+  });
+  results.forEach((item) => {
+    if (!item || !item.shareUrl) return;
+    const key = shareResultsCacheKey(item);
+    if (key) {
+      map.set(key, item);
+    }
+  });
+  shareResults.value = Array.from(map.values());
+};
+
+const clearShareResults = () => {
+  shareResults.value = [];
+};
+
+const openShareQRCode = (link) => {
+  if (!link) return;
+  currentShareLink.value = link;
+  showShareQrModal.value = true;
+};
+
+const closeShareQRCode = () => {
+  showShareQrModal.value = false;
+  currentShareLink.value = "";
+};
+
+const handleShareBoxStatus = (payload) => {
+  if (!payload || !payload.message) return;
+  if (payload.type === "success") {
+    showSuccess(payload.message);
+  } else if (payload.type === "warning") {
+    showWarning(payload.message);
+  } else {
+    showError(payload.message);
+  }
 };
 
 // 处理上传错误事件
@@ -166,4 +289,19 @@ onMounted(() => {
     padding-top: 1rem;
   }
 }
+
+.share-results-scroll {
+  max-height: 26rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+@media (max-width: 640px) {
+  .share-results-scroll {
+    max-height: none;
+    overflow-y: visible;
+    padding-right: 0;
+  }
+}
+
 </style>

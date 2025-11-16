@@ -62,8 +62,20 @@
     <ShareLinkBox
       ref="shareLinkRef"
       :dark-mode="darkMode"
+      :label="t('markdown.shareLink')"
       :share-link="shareLink"
-      :share-password="currentSharePassword"
+      :copy-tooltip="t('markdown.copyLink')"
+      :copy-success-text="t('markdown.linkCopied')"
+      :copy-failure-text="t('markdown.copyFailed')"
+      :show-qr-button="true"
+      :qr-tooltip="t('markdown.showQRCode')"
+      :secondary-link="rawShareLink"
+      :secondary-tooltip="t('markdown.copyRawLink')"
+      :secondary-success-text="t('markdown.rawLinkCopied')"
+      :secondary-failure-text="t('markdown.copyFailed')"
+      :show-countdown="true"
+      :countdown-seconds="15"
+      :countdown-formatter="formatCountdownText"
       @show-qr-code="showQRCode"
       @status-message="handleStatusMessage"
       @countdown-end="handleCountdownEnd"
@@ -94,7 +106,7 @@ import { usePasteService } from "@/modules/paste";
 import VditorUnified from "@/components/common/VditorUnified.vue";
 import PermissionManager from "@/components/common/PermissionManager.vue";
 import EditorForm from "@/modules/paste/editor/components/EditorForm.vue";
-import ShareLinkBox from "@/modules/paste/editor/components/ShareLinkBox.vue";
+import ShareLinkBox from "@/components/common/ShareLinkBox.vue";
 import QRCodeModal from "@/modules/paste/editor/components/QRCodeModal.vue";
 import CopyFormatMenu from "@/modules/paste/editor/components/CopyFormatMenu.vue";
 import AnnouncementModal from "@/modules/admin/components/AnnouncementModal.vue";
@@ -124,12 +136,20 @@ const savingStatus = ref("");
 const isSubmitting = ref(false);
 const shareLink = ref("");
 const currentSharePassword = ref("");
+
+const rawShareLink = computed(() => {
+  if (!shareLink.value) return "";
+  const slug = shareLink.value.split("/").pop();
+  return slug ? pasteService.getRawPasteUrl(slug, currentSharePassword.value || null) : "";
+});
+
+const formatCountdownText = (seconds) => t("markdown.linkExpireIn", { seconds });
 const isPlainTextMode = ref(false);
 const editorContent = ref("");
 const currentEditor = ref(null);
 
-// 从Store获取权限状态的计算属性
-const hasPermission = computed(() => authStore.hasTextPermission);
+// 从Store获取权限状态的计算属性（文本分享创建权限）
+const hasPermission = computed(() => authStore.hasTextSharePermission);
 
 // 二维码弹窗状态
 const showQRCodeModal = ref(false);
@@ -169,11 +189,13 @@ const handleFormChange = (formData) => {
   console.log("Form data changed:", formData);
 };
 
-const handleStatusMessage = (message) => {
+const handleStatusMessage = (payload) => {
+  const message = typeof payload === "string" ? payload : payload?.message;
+  if (!message) return;
   savingStatus.value = message;
   setTimeout(() => {
     savingStatus.value = "";
-  }, 3000);
+  }, typeof payload === "object" && payload?.type === "error" ? 4000 : 3000);
 };
 
 const handleCountdownEnd = () => {

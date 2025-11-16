@@ -2,14 +2,6 @@
   <div class="paste-view-editor-wrapper">
     <!-- 主要编辑器内容 -->
     <div class="paste-view-editor">
-      <!-- 成功通知提示 -->
-      <div v-if="notification" class="fixed bottom-4 right-4 z-50 px-4 py-2 rounded-lg bg-green-500 text-white shadow-lg notification-toast flex items-center">
-        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-        </svg>
-        {{ notification }}
-      </div>
-
       <!-- 添加隐藏的文件输入控件用于导入Markdown文件 -->
       <input type="file" ref="markdownImporter" accept=".md,.markdown,.mdown,.mkd" style="display: none" @change="importMarkdownFile" />
 
@@ -62,18 +54,21 @@
       <!-- 元数据编辑表单 - 允许编辑备注、过期时间等 -->
       <div class="mt-6 border-t pt-4" :class="darkMode ? 'border-gray-700' : 'border-gray-200'">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <!-- 链接后缀 - 不可修改 -->
+          <!-- 链接后缀 -->
           <div class="form-group">
             <label class="form-label block mb-1 text-sm font-medium" :class="darkMode ? 'text-gray-300' : 'text-gray-700'">链接后缀</label>
-            <input
-              type="text"
-              class="form-input w-full rounded-md shadow-sm cursor-not-allowed opacity-75"
-              :class="getInputClasses(darkMode)"
-              placeholder="不可修改"
-              v-model="editForm.customLink"
-              disabled
-            />
-            <p class="mt-1 text-xs" :class="darkMode ? 'text-gray-500' : 'text-gray-400'">后缀不可修改，仅支持字母、数字、-和_</p>
+            <div class="flex items-center">
+              <input
+                type="text"
+                class="form-input w-full rounded-md shadow-sm"
+                :class="[getInputClasses(darkMode), slugError ? (darkMode ? 'border-red-500' : 'border-red-600') : '']"
+                placeholder="留空则自动生成"
+                v-model="editForm.customLink"
+                @input="handleSlugInput"
+              />
+            </div>
+            <p v-if="slugError" class="mt-1 text-xs" :class="darkMode ? 'text-red-400' : 'text-red-600'">{{ slugError }}</p>
+            <p v-else class="mt-1 text-xs" :class="darkMode ? 'text-gray-500' : 'text-gray-400'">仅限字母、数字、-、_、.，留空自动生成</p>
           </div>
 
           <!-- 备注信息 -->
@@ -188,8 +183,9 @@
 
 <script setup>
 import { ref, watch, onBeforeUnmount } from "vue";
-  import { getInputClasses } from "./PasteViewUtils";
-  import VditorUnified from "@/components/common/VditorUnified.vue";
+import { useGlobalMessage } from "@/composables/core/useGlobalMessage.js";
+import { getInputClasses } from "./PasteViewUtils";
+import VditorUnified from "@/components/common/VditorUnified.vue";
 import PasteCopyFormatMenu from "./PasteCopyFormatMenu.vue";
 
 // Props 定义
@@ -207,10 +203,12 @@ const props = defineProps({
 // Emits 定义
 const emit = defineEmits(["save", "cancel", "update:error", "update:isPlainTextMode"]);
 
+// 全局消息
+const { showSuccess, showError, showWarning, showInfo } = useGlobalMessage();
+
 // 响应式数据
 const editorRef = ref(null);
 const editorContent = ref(props.content);
-const notification = ref("");
 const showPassword = ref(false);
 const markdownImporter = ref(null);
 
@@ -256,13 +254,7 @@ const editForm = ref({
   clearPassword: false, // 新增是否清除密码的标志
 });
 
-// 工具函数
-const showNotification = (message, duration = 2000) => {
-  notification.value = message;
-  setTimeout(() => {
-    notification.value = "";
-  }, duration);
-};
+const slugError = ref("");
 
 // 切换编辑器模式
 const toggleEditorMode = () => {
@@ -294,10 +286,35 @@ const validateMaxViews = () => {
   if (value < 0) {
     editForm.value.maxViews = 0;
   }
-  // 确保是整数
   if (!Number.isInteger(value)) {
     editForm.value.maxViews = Math.floor(value);
   }
+};
+
+const validateCustomLink = () => {
+  slugError.value = "";
+  const raw = editForm.value.customLink ? editForm.value.customLink.trim() : "";
+  if (!raw) {
+    return true;
+  }
+
+  const slugRegex = /^[a-zA-Z0-9._-]+$/;
+  if (!slugRegex.test(raw)) {
+    slugError.value = "链接后缀只能包含字母、数字、-、_、.";
+    return false;
+  }
+
+  if (raw.length > 50) {
+    slugError.value = "链接后缀不能超过50个字符";
+    return false;
+  }
+
+  editForm.value.customLink = raw;
+  return true;
+};
+
+const handleSlugInput = () => {
+  validateCustomLink();
 };
 
 // 编辑器事件处理
@@ -328,7 +345,7 @@ const clearEditorContent = () => {
         editorRef.value.setValue("");
       }
     }
-    showNotification("内容已清空");
+    handleStatusMessage({ type: "success", message: "内容已清空" });
   }
 };
 
@@ -355,11 +372,35 @@ const closeCopyFormatMenu = () => {
 };
 
 // 处理状态消息
-const handleStatusMessage = ({ message, type }) => {
+const handleStatusMessage = (payload) => {
+  /** @type {string | undefined} */
+  let message;
+  /** @type {string} */
+  let type = "info";
+
+  if (typeof payload === "string") {
+    message = payload;
+  } else if (payload && typeof payload === "object") {
+    message = payload.message;
+    type = payload.type || "info";
+  }
+
+  if (!message) {
+    return;
+  }
+
   if (type === "error") {
     emit("update:error", message);
+    showError(message);
+    return;
+  }
+
+  if (type === "success") {
+    showSuccess(message);
+  } else if (type === "warning") {
+    showWarning(message);
   } else {
-    showNotification(message);
+    showInfo(message);
   }
 };
 
@@ -379,6 +420,7 @@ watch(
       editForm.value.customLink = newPaste.slug || "";
       editForm.value.maxViews = newPaste.max_views || 0;
       editForm.value.password = "";
+      slugError.value = "";
 
       // 处理过期时间
       editForm.value.expiryTime = getInitialExpiryTime(newPaste.expires_at);
@@ -408,6 +450,11 @@ const saveEdit = async () => {
     return;
   }
 
+  if (!validateCustomLink()) {
+    emit("update:error", slugError.value || "链接后缀格式无效");
+    return;
+  }
+
   // 准备更新数据对象，包含内容和元数据
   const updateData = {
     content: newContent,
@@ -415,7 +462,11 @@ const saveEdit = async () => {
     max_views: editForm.value.maxViews === 0 ? null : parseInt(editForm.value.maxViews),
   };
 
-  // 处理自定义链接 - 注意：链接后缀不可修改，所以不包含在更新数据中
+  const normalizedSlug = editForm.value.customLink ? editForm.value.customLink.trim() : "";
+  const currentSlug = props.paste?.slug || "";
+  if (normalizedSlug !== currentSlug) {
+    updateData.newSlug = normalizedSlug || null;
+  }
 
   // 处理过期时间
   if (editForm.value.expiryTime !== "0") {
@@ -486,7 +537,7 @@ const importMarkdownFile = (event) => {
         }
       }
 
-      showNotification("文件导入成功");
+      handleStatusMessage({ type: "success", message: "文件导入成功" });
 
       // 清空文件输入，允许重复导入同一文件
       if (markdownImporter.value) {
@@ -515,7 +566,6 @@ watch(
 
 // 清理
 onBeforeUnmount(() => {
-  notification.value = "";
   copyFormatMenuVisible.value = false;
 });
 </script>
@@ -530,18 +580,4 @@ onBeforeUnmount(() => {
   margin-bottom: 1rem;
 }
 
-.notification-toast {
-  animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
 </style>
