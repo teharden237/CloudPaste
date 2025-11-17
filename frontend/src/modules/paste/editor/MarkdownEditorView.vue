@@ -101,6 +101,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/stores/authStore";
 import { usePasteService } from "@/modules/paste";
+import { useGlobalMessage } from "@/composables/core/useGlobalMessage.js";
 
 // 导入子组件
 import VditorUnified from "@/components/common/VditorUnified.vue";
@@ -116,6 +117,7 @@ const { t } = useI18n();
 // 使用认证Store
 const authStore = useAuthStore();
 const pasteService = usePasteService();
+const { showSuccess, showError, showWarning, showInfo } = useGlobalMessage();
 
 // Props
 const props = defineProps({
@@ -191,11 +193,25 @@ const handleFormChange = (formData) => {
 
 const handleStatusMessage = (payload) => {
   const message = typeof payload === "string" ? payload : payload?.message;
+  const type = typeof payload === "object" && payload?.type ? payload.type : "info";
+
   if (!message) return;
+
   savingStatus.value = message;
+
+  if (type === "error") {
+    showError(message);
+  } else if (type === "success") {
+    showSuccess(message);
+  } else if (type === "warning") {
+    showWarning(message);
+  } else {
+    showInfo(message);
+  }
+
   setTimeout(() => {
     savingStatus.value = "";
-  }, typeof payload === "object" && payload?.type === "error" ? 4000 : 3000);
+  }, type === "error" ? 4000 : 3000);
 };
 
 const handleCountdownEnd = () => {
@@ -251,6 +267,22 @@ const clearEditorContent = () => {
   editorContent.value = "";
 };
 
+// 根据当前工具栏按钮位置更新复制格式菜单的位置
+const updateCopyFormatMenuPosition = () => {
+  if (!copyFormatMenuVisible.value) {
+    return;
+  }
+
+  const copyFormatBtn = document.querySelector('.vditor-toolbar .vditor-tooltipped[data-type="copy-formats"]');
+  if (copyFormatBtn) {
+    const rect = copyFormatBtn.getBoundingClientRect();
+    copyFormatMenuPosition.value = {
+      x: rect.left,
+      y: rect.bottom + 5,
+    };
+  }
+};
+
 // 显示复制格式菜单
 const showCopyFormatsMenu = (position) => {
   if (!currentEditor.value) return;
@@ -280,6 +312,15 @@ const showCopyFormatsMenu = (position) => {
 const closeCopyFormatMenu = () => {
   copyFormatMenuVisible.value = false;
 };
+
+// 窗口尺寸变化时，保持菜单跟随工具栏按钮
+onMounted(() => {
+  window.addEventListener("resize", updateCopyFormatMenuPosition);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", updateCopyFormatMenuPosition);
+});
 
 // 显示二维码
 const showQRCode = () => {

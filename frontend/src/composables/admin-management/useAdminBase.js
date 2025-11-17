@@ -1,5 +1,6 @@
 import { ref, reactive } from "vue";
 import { useGlobalMessage } from "@/composables/core/useGlobalMessage.js";
+import { formatCurrentTime } from "@/utils/timeUtils.js";
 
 /**
  * 管理功能基础composable
@@ -176,8 +177,8 @@ export function useAdminBase(pageKey = "default") {
     setTimeout(() => {
       successMessage.value = "";
     }, duration);
-     // 同步到全局消息系统
-     globalMessage.showSuccess(message, duration);
+    // 同步到全局消息系统
+    globalMessage.showSuccess(message, duration);
   };
 
   /**
@@ -199,17 +200,10 @@ export function useAdminBase(pageKey = "default") {
   };
 
   /**
-   * 更新最后刷新时间
+   * 更新最后刷新时间（仅返回时间，不包含标签文本）
    */
   const updateLastRefreshTime = () => {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString("zh-CN", {
-      hour12: false,
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-    lastRefreshTime.value = `最后刷新: ${timeString}`;
+    lastRefreshTime.value = formatCurrentTime();
   };
 
   /**
